@@ -1,0 +1,203 @@
+PATIENT HEALTH RECORD - DEMONSTRATION FILE
+===========================================
+
+PATIENT INFORMATION
+-------------------
+Name: John Michael Smith
+Date of Birth: 03/15/1980 (Age: 44)
+Sex: Male
+MRN: MRN-2024-789456
+Address: 1234 Main Street, Springfield, IL 62701
+Phone: (555) 123-4567
+Email: john.smith@email.com
+
+PRIMARY CARE PHYSICIAN
+----------------------
+Dr. Sarah Johnson, MD
+Springfield Family Medicine
+Phone: (555) 987-6543
+
+CHIEF COMPLAINTS & MEDICAL HISTORY
+-----------------------------------
+Patient is a 44-year-old male presenting for annual physical examination and management of chronic conditions.
+
+PAST MEDICAL HISTORY:
+- Type 2 Diabetes Mellitus (diagnosed 2018)
+- Essential Hypertension (diagnosed 2019)
+- Obesity (BMI 32.4)
+- Prediabetes progressed to diabetes
+- Hyperlipidemia (diagnosed 2020)
+- History of sleep apnea (uses CPAP nightly)
+
+SURGICAL HISTORY:
+- Appendectomy (2005)
+- Knee arthroscopy (2016)
+
+FAMILY HISTORY:
+- Father: Type 2 diabetes, coronary artery disease (deceased age 68)
+- Mother: Hypertension, breast cancer survivor (age 72)
+- Brother: Obesity, prediabetes (age 42)
+
+SOCIAL HISTORY:
+- Former smoker (quit 2015, 10 pack-year history)
+- Alcohol: 2-3 drinks per week
+- Exercise: Minimal, sedentary job
+- Diet: High carbohydrate, irregular meals
+- Married, 2 children (ages 12 and 15)
+
+CURRENT MEDICATIONS
+-------------------
+1. Metformin 1000mg twice daily (diabetes)
+2. Lisinopril 20mg once daily (hypertension)
+3. Atorvastatin 40mg once daily (cholesterol)
+4. Aspirin 81mg once daily (cardiovascular prevention)
+5. Vitamin D3 2000 IU daily
+
+ALLERGIES
+---------
+- Penicillin (rash)
+- Sulfa drugs (hives)
+
+VITAL SIGNS (Current Visit - 10/15/2024)
+-----------------------------------------
+Blood Pressure: 138/86 mmHg
+Heart Rate: 78 bpm
+Temperature: 98.4°F
+Respiratory Rate: 16 breaths/min
+Height: 5'10" (178 cm)
+Weight: 225 lbs (102 kg)
+BMI: 32.4 (Obese Class I)
+
+RECENT LABORATORY RESULTS
+--------------------------
+Date: 09/20/2024
+
+Comprehensive Metabolic Panel:
+- Glucose (fasting): 142 mg/dL (elevated)
+- HbA1c: 7.8% (above target, poor control)
+- Creatinine: 1.1 mg/dL (normal)
+- eGFR: 78 mL/min/1.73m² (normal)
+- ALT: 42 U/L (slightly elevated)
+- AST: 38 U/L (normal)
+
+Lipid Panel:
+- Total Cholesterol: 198 mg/dL
+- LDL: 118 mg/dL (at goal)
+- HDL: 42 mg/dL (low)
+- Triglycerides: 190 mg/dL (elevated)
+
+Complete Blood Count:
+- WBC: 7.2 K/uL (normal)
+- Hemoglobin: 14.5 g/dL (normal)
+- Platelets: 245 K/uL (normal)
+
+Thyroid Function:
+- TSH: 2.4 mIU/L (normal)
+
+Vitamin D:
+- 25-OH Vitamin D: 28 ng/mL (insufficient, supplementing)
+
+IMMUNIZATION HISTORY
+--------------------
+- COVID-19: Booster received 03/2024
+- Influenza: Last received 10/2023 (due for 2024 flu shot)
+- Tdap: Received 2020
+- Pneumococcal (PPSV23): Not yet received (recommended for diabetes)
+- Hepatitis B: Series completed childhood
+- MMR: Childhood vaccination
+- Shingles (Shingrix): Not yet received (eligible at age 50)
+
+PREVENTIVE HEALTH SCREENINGS
+-----------------------------
+Colorectal Cancer Screening:
+- Colonoscopy performed 08/2023 (age 43)
+- Results: Normal, no polyps found
+- Next screening due: 2033 (10 years)
+
+Cardiovascular Screening:
+- EKG performed 09/2024: Normal sinus rhythm
+- Last lipid panel: 09/2024 (see above)
+- 10-year ASCVD risk score: 12.5% (moderate risk)
+
+Diabetes Screening:
+- HbA1c monitored quarterly
+- Last diabetic eye exam: 06/2024 (no retinopathy)
+- Foot exam: Performed today, no neuropathy detected
+- Last urine microalbumin: 09/2024 (negative)
+
+Other Screenings:
+- Blood pressure: Checked at each visit
+- Depression screening (PHQ-9): Score 3 (minimal symptoms)
+- Last dental exam: 04/2024
+- Vision exam: 05/2024 (needs reading glasses)
+
+NOT YET COMPLETED:
+- Abdominal aortic aneurysm screening (AAA ultrasound) - recommended for former smokers
+- Hepatitis C screening - should be done once for all adults
+- HIV screening - recommended for all adults at least once
+- Lung cancer screening (low-dose CT) - may be eligible due to smoking history
+
+CLINICAL NOTES - Current Visit (10/15/2024)
+--------------------------------------------
+SUBJECTIVE:
+Patient presents for annual physical. Reports generally feeling well but notes fatigue and difficulty losing weight despite efforts. Denies chest pain, shortness of breath, or other acute concerns. Blood sugars have been running 140-180 mg/dL fasting per home glucose monitor. Medication compliance good. Using CPAP nightly with improved sleep quality.
+
+OBJECTIVE:
+Well-appearing male in no acute distress. Blood pressure elevated at 138/86. BMI remains in obese range at 32.4. Cardiovascular exam: Regular rate and rhythm, no murmurs. Respiratory: Clear to auscultation bilaterally. Abdominal: Soft, non-tender, obese. Extremities: No edema, peripheral pulses intact. Diabetic foot exam: Intact sensation, no wounds.
+
+ASSESSMENT:
+1. Type 2 Diabetes Mellitus - suboptimal control (HbA1c 7.8%)
+2. Essential Hypertension - not at goal (BP 138/86)
+3. Obesity (BMI 32.4) - ongoing challenge
+4. Hyperlipidemia - improved on statin therapy
+5. Obstructive Sleep Apnea - controlled with CPAP
+
+PLAN:
+1. Diabetes: Increase Metformin to 1500mg AM, 1000mg PM. Reinforce dietary counseling. Recheck HbA1c in 3 months.
+2. Hypertension: Increase Lisinopril to 30mg daily. Home BP monitoring encouraged.
+3. Weight management: Referral to nutritionist. Discussed 150 minutes weekly moderate exercise goal.
+4. Preventive health:
+   - Schedule 2024 flu vaccine (patient to return in 1 week)
+   - Order AAA screening ultrasound (former smoker)
+   - Order one-time Hepatitis C antibody test
+   - Order one-time HIV screening test
+   - Discussed pneumococcal vaccine (will administer today with flu shot)
+5. Follow-up in 3 months for medication adjustments and lab review.
+
+PATIENT EDUCATION:
+- Reviewed importance of consistent blood sugar monitoring
+- Emphasized Mediterranean diet for diabetes and heart health
+- Encouraged smoking cessation maintenance
+- Discussed cardiovascular risk reduction strategies
+
+Signed: Dr. Sarah Johnson, MD
+Date: 10/15/2024
+
+---
+
+PROGRESS NOTES - Previous Visits
+---------------------------------
+
+Visit: 07/12/2024
+- Routine follow-up for diabetes management
+- HbA1c: 7.9% (slightly improved from 8.1%)
+- BP: 132/82 mmHg
+- Weight: 228 lbs
+- Continuing current medication regimen
+- Encouraged lifestyle modifications
+
+Visit: 04/18/2024
+- Complaint: Right knee pain
+- Exam: Mild osteoarthritis
+- Treatment: NSAIDs, physical therapy referral
+- Diabetes stable
+
+Visit: 01/22/2024
+- Annual diabetes comprehensive visit
+- Diabetic eye exam scheduled
+- Foot exam normal
+- Updated prescriptions
+
+---
+
+END OF RECORD
