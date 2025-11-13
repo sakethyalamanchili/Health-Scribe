@@ -5,7 +5,6 @@ Each agent is specialized for a specific task in the pipeline
 
 import json
 from typing import List, Dict, Any, Optional
-# from urllib import response  <-- This line is not used
 import google.generativeai as genai
 import config
 from models import (
@@ -116,7 +115,6 @@ Return ONLY the JSON, no additional text."""
                 print(f"Error getting text response (likely safety block): {e}")
                 print(f"Full response feedback: {response.prompt_feedback}")
                 return "I'm sorry, I encountered an error and cannot provide a response at this time."
-
     
     # ========== AGENT 1: PATIENT SUMMARIZATION ==========
     
@@ -330,28 +328,24 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
         
         # ========== STEP 1: THE "ASSESSOR" (FIRST DRAFT) ==========
         
-        system_prompt_assessor = """You are a medical record analyst with expertise in evidence extraction.
+        system_prompt_assessor = """You are a medical record analyst and clinical triage expert.
 
-    Your task: Determine if a health activity was completed by searching the patient's record.
+    Your task: Determine the status of a health activity AND its medical urgency.
 
-    You must perform "fuzzy reasoning":
-    1. SEMANTIC UNDERSTANDING: Recognize that "flu shot", "influenza vaccine", and "flu jab" are the same
-    2. TEMPORAL REASONING: Understand timeframes like "last year", "annually", "within 6 months"
-    3. EVIDENCE EXTRACTION: Find specific dates, test results, or documentation
+    You must perform "fuzzy reasoning" to determine the status (Completed, Recommended, Needs user confirmation).
 
-    Status Determination:
-    - "Completed": Clear evidence found in record with date/details
-    - "Recommended": No evidence found, patient should do this
-    - "Needs user confirmation": Ambiguous evidence, ask user to clarify
-
+    You must also assign an 'urgency' level based on the patient's context:
+    - 'High': Critical, overdue screenings (e.g., cancer) or unmanaged chronic conditions (e.g., high blood pressure, diabetes).
+    - 'Medium': Routine annual tasks, vaccinations, or follow-ups.
+    - 'Low': General wellness, non-urgent lifestyle advice.
+    
     For "Completed" status:
-    - Provide supporting_evidence with specific quote from record
-    - Extract completion_date if available
-
+    - Provide supporting_evidence and completion_date.
+    
     For "Needs user confirmation" status:
-    - Generate 1-3 simple yes/no questions to clarify
-
-    Be thorough but conservative. If uncertain, mark as "Needs user confirmation"."""
+    - Generate 1-3 simple yes/no questions.
+    
+    Be thorough. Your output must be a valid JSON."""
 
         user_prompt_assessor = f"""Activity to assess:
     {activity.model_dump_json(indent=2)}
@@ -359,7 +353,7 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
     Patient Health Record:
     {patient_data}
 
-    Analyze the entire record and determine the status of this activity."""
+    Analyze the entire record and determine the status and urgency of this activity."""
 
         try:
             # Generate the first draft
@@ -375,6 +369,7 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
                 activity_id=activity.activity_id,
                 recommendation_short_str=activity.recommendation_short_str,
                 status=HealthActivityStatus.RECOMMENDED,
+                urgency="Medium",
                 supporting_evidence="Error during initial AI assessment.",
                 user_input_questions=[]
             )
@@ -384,18 +379,18 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
         system_prompt_validator = """You are a meticulous Quality Control agent. You will review another AI's assessment of a patient record.
 
 Your job:
-1. Review the original "Activity" and the "Patient Record".
+1. Review the "Activity" and the "Patient Record".
 2. Critically analyze the "First-Draft Assessment".
 3. Check if the 'supporting_evidence' truly supports the 'status'.
-4. Look for contradictions or missed information in the record.
+4. **Critically review the 'urgency' level.** Is 'High' appropriate for this patient's risks?
 5. Assign a 'confidence_score' (0-100) for the draft.
 6. **Final Decision:**
-   - If confidence < 70, you MUST provide a *new, corrected assessment*. Discard the draft and generate a new one based on your own analysis.
-   - If confidence >= 70, the draft is good. Return the *original draft assessment*, but add your confidence score to it.
+   - If confidence < 70, you MUST provide a *new, corrected assessment* (including status AND urgency).
+   - If confidence >= 70, the draft is good. Return the *original draft assessment*, but add your confidence score.
 
-7. **MANDATORY RULE:** If the final 'status' you decide on is "Needs user confirmation", you **MUST** generate 1-3 simple questions in the 'user_input_questions' field to help the user clarify.
+7. **MANDATORY RULE:** If the final 'status' is "Needs user confirmation", you MUST generate 'user_input_questions'.
 
-Your final output MUST be a single, valid JSON object matching the 'HealthActivityAssessmentOutput' schema."""
+Your final output MUST be a single, valid JSON object."""
 
         user_prompt_validator = f"""**1. Original Activity to Assess:**
     {activity.model_dump_json(indent=2)}
@@ -484,8 +479,7 @@ Your final output MUST be a single, valid JSON object matching the 'HealthActivi
             )
             
             return response
-        
-        
+
     # ========== AGENT 7: WHAT-IF ANALYST AGENT ==========
     
     def run_what_if_analysis_agent(
@@ -501,16 +495,18 @@ Your final output MUST be a single, valid JSON object matching the 'HealthActivi
         a personalized explanation for the medical and score-based reasons.
         """
         
-        system_prompt = """You are 'Asha,' an expert AI health analyst. 
-A user is running a 'what-if' simulation to see what happens if they complete a specific task.
+        system_prompt = """You are a precision AI analyst named 'Asha'.
+Your job is to analyze a 'what-if' scenario for a user about their health report.
 
-Your job is to provide a concise, personalized analysis explaining WHY this activity is important.
+**CRITICAL RULES:**
+1.  **NO OUTSIDE KNOWLEDGE:** You are FORBIDDEN from using any information not explicitly provided in the `Patient Summary` or `Health Report JSON`.
+2.  **USE THE CONTEXT:** Your analysis MUST be based *only* on the provided data. Reference the patient's specific conditions (like 'Type 2 Diabetes' or 'Hypertension') from the summary.
+3.  **QUOTE YOUR EVIDENCE:** When explaining the medical reason, you should briefly cite the patient's condition (e.g., "Because your summary notes you are managing Type 2 Diabetes...").
+4.  **STAY FOCUSED:** Do not be overly chatty. Provide two clear sections: "1. The Medical Reason" and "2. The Score Reason".
 
-You MUST provide two explanations in your answer:
-1.  **The Medical Reason:** Look at the user's `Patient Summary` and the `selected_activity`. Explain *why* this specific activity is medically important for *this specific patient* and their chronic conditions.
-2.  **The Score Reason:** Look at the `current_score` and `new_score`. Explain *how* completing this "Recommended" task moves it to the "Completed" category and why that boosts their score.
-
-Be empathetic and analytical. Start with the medical reason first.
+**YOUR TASK:**
+1.  **The Medical Reason:** Explain why the `selected_activity` is medically important, *specifically* for the conditions listed in the `Patient Summary`.
+2.  **The Score Reason:** Explain how the `current_score` changed to the `new_score` based on the weighted scoring system (High=3, Medium=2, Low=1).
 """
         
         user_prompt = f"""Here is the simulation context:

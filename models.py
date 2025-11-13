@@ -20,14 +20,14 @@ class HealthActivityRecommendation(BaseModel):
     activity_id: str = Field(description="Unique identifier for this activity")
     recommendation_short_str: str = Field(
         description="Brief activity description (max 100 chars)",
-        max_length=100  # Increased from 80
+        max_length=100
     )
     recommendation_long_str: str = Field(
         description="Detailed activity description"
     )
     frequency_short_str: str = Field(
-        description="Frequency description (max 60 chars)",
-        max_length=120  # Increased from 40
+        description="Frequency description (max 120 chars)",
+        max_length=120
     )
     category: Literal[
         "Preventive Screening",
@@ -46,23 +46,26 @@ class HealthActivityRecommendationList(BaseModel):
         description="List of consolidated, deduplicated health activities"
     )
 
-# In models.py
+
 class HealthActivityAssessmentOutput(BaseModel):
     """Assessment result for a single health activity"""
     activity_id: str = Field(description="ID of the activity being assessed")
     recommendation_short_str: str = Field(description="Activity name")
-
-    # --- This is our new field ---
+    
     confidence_score: Optional[int] = Field(
         default=None,
         description="Confidence in this assessment (0-100)"
     )
     
-    # --- ADD THESE 3 FIELDS ---
+    # --- NEW URGENCY FIELD ---
+    urgency: Literal["High", "Medium", "Low"] = Field(
+        default="Medium",
+        description="Medical urgency of this activity for this patient (High, Medium, Low)"
+    )
+    
     recommendation_long_str: str = Field(description="Detailed activity description", default="")
     frequency_short_str: str = Field(description="Frequency description", default="")
     category: str = Field(description="Health activity category", default="Other")
-    # --------------------------
 
     status: HealthActivityStatus = Field(
         description="Completion status of this activity"

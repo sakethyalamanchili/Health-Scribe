@@ -17,6 +17,17 @@ from orchestrator import HealthAssessmentOrchestrator
 from models import HealthActivityStatus
 
 
+def get_urgency_emoji(urgency: str) -> str:
+    """Returns a color-coded emoji for the urgency level."""
+    if urgency == "High":
+        return "🔴"  # Urgent
+    if urgency == "Medium":
+        return "🟡"  # Soon
+    if urgency == "Low":
+        return "🟢"  # Routine
+    return "⚪"  # Default
+
+
 def main():
     # Check Google Gemini API key before proceeding
     if not config.GOOGLE_API_KEY:
@@ -110,18 +121,18 @@ streamlit run streamlit_app.py
         st.markdown("""
         **Asha** means "hope" in Sanskrit.
         
-        This system uses 5 specialized AI agents to:
-        - Read and understand patient health records
+        This system uses a team of specialized AI agents to:
+        - Unify multiple, fragmented health records (.txt files)
         - Cross-reference against medical guidelines (RAG)
-        - Assess which health activities are "Completed" or "Recommended"
-        - Calculate a real-time health engagement score
+        - **Prioritize** tasks by medical urgency (🔴 High, 🟡 Medium, 🟢 Low)
+        - **Self-correct** its own assessments with a confidence score
         - Answer your questions about your report
         
         **Technology Stack:**
         - Multi-Agent AI Architecture
         - Google Gemini 1.5 Pro
+        - Agentic Self-Correction Loop
         - USPSTF Clinical Guidelines (RAG)
-        - Pydantic Structured Output
         - HIPAA De-identification
         """)
         
@@ -130,7 +141,7 @@ streamlit run streamlit_app.py
         st.subheader("System Status")
         st.success(f"✅ API: Connected")
         st.info(f"🤖 Model: {config.GEMINI_MODEL}")
-        st.info(f"⚡ Agents: 5 Active + 1 Chatbot")
+        st.info(f"⚡ Agents: 5 Active + 2 Chatbots")
     
     # Main content
     tab1, tab2, tab3, tab4 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works", "🔮 What-If Analysis"])
@@ -201,7 +212,7 @@ streamlit run streamlit_app.py
         st.markdown("""
         ### Multi-Agent Architecture
         
-        Project Asha uses a deterministic pipeline of 5 specialized AI agents (plus a 6th for chat):
+        Project Asha uses a deterministic pipeline of specialized AI agents:
         """)
         
         agents = [
@@ -226,8 +237,14 @@ streamlit run streamlit_app.py
             {
                 "name": "4. Self-Correcting Assessment Agent",
                 "icon": "🧠",
-                "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, and corrects it if needed.",
-                "output": "Final assessment with status and confidence score"
+                "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, **prioritizes it (🔴/🟡/🟢)**, and corrects it if needed.",
+                "output": "Final assessment with status, confidence, and urgency"
+            },
+            {
+                "name": "5. Conversational & Analyst Agents",
+                "icon": "💬",
+                "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
+                "output": "Natural language explanations"
             }
         ]
         
@@ -243,20 +260,13 @@ streamlit run streamlit_app.py
                 st.divider()
         
         st.markdown("""
-        ### Health Engagement Score
-        
-        The system calculates a **gamified score (0-100)** based on:
-        - Completed preventive care activities
-        - Adherence to clinical guidelines
-        - Temporal relevance of activities
-        
         ### Why Agents?
         
         This problem is **Agentic-Mandatory** because it requires:
-        - Temporal reasoning (understanding dates and recency)
-        - Semantic understanding (merging "flu shot" and "influenza vaccine")
-        - Evidence-based reasoning (RAG with medical guidelines)
-        - Fuzzy logic assessment (interpreting partial completion)
+        - **Clinical Prioritization:** Reasoning about medical urgency.
+        - **Self-Correction:** An agent must review and validate its own "fuzzy" assessments.
+        - **Semantic Understanding:** Merging "flu shot" and "influenza vaccine".
+        - **Evidence-Based Reasoning:** RAG with medical guidelines.
         
         Traditional rule-based systems cannot handle these nuanced requirements.
         """)
@@ -283,27 +293,40 @@ streamlit run streamlit_app.py
             st.success("Congratulations! You have no recommended activities left to complete.")
             st.stop()
 
-        # Create a list of names for the selectbox
-        activity_names = [a.recommendation_short_str for a in recommended_activities]
+        # --- NEW: Sort activities by urgency for the dropdown ---
+        recommended_activities.sort(key=lambda x: (x.urgency == 'High', x.urgency == 'Medium'), reverse=True)
+        activity_names = [f"{get_urgency_emoji(a.urgency)} {a.recommendation_short_str} ({a.urgency} Urgency)" for a in recommended_activities]
         
-        selected_name = st.selectbox("Select a recommended activity to simulate:", activity_names)
+        selected_display_name = st.selectbox("Select a recommended activity to simulate:", activity_names)
         
+        # Find the original activity name
+        selected_name = selected_display_name.split(" ", 1)[1].rsplit(" (", 1)[0]
+        
+        # Find the activity object
+        selected_activity = next(
+            a for a in recommended_activities if a.recommendation_short_str == selected_name
+        )
+
         if st.button("Simulate Completion", use_container_width=True):
             # 1. GET CURRENT DATA
-            current_completed = result.completed_count
-            current_total = result.total_activities
-            current_needs_confirm = result.needs_confirmation_count
             current_score = result.health_engagement_score
 
-            # 2. CALCULATE NEW SCORE (LOCAL MATH)
-            new_completed_count = current_completed + 1
-            new_score = utils.calculate_health_engagement_score(
-                completed=new_completed_count,
-                total=current_total,
-                needs_confirmation=current_needs_confirm 
-            )
+            # 2. CREATE A HYPOTHETICAL LIST OF ASSESSMENTS
+            hypothetical_assessments = []
+            for a in result.activity_assessments:
+                if a.activity_id == selected_activity.activity_id:
+                    # Create a copy and "complete" it
+                    new_a = a.model_copy()
+                    new_a.status = HealthActivityStatus.COMPLETED
+                    hypothetical_assessments.append(new_a)
+                else:
+                    hypothetical_assessments.append(a)
             
-            # 3. DISPLAY THE METRICS
+            # 3. CALCULATE NEW SCORE (using the new WEIGHTED function)
+            new_score_data = utils.calculate_weighted_health_engagement_score(hypothetical_assessments)
+            new_score = new_score_data["score"]
+
+            # 4. DISPLAY THE METRICS
             st.markdown("### 📈 Simulated Score")
             col1, col2 = st.columns(2)
             score_delta = new_score - current_score
@@ -317,14 +340,13 @@ streamlit run streamlit_app.py
                 st.metric(
                     label=f"New Score (after completing '{selected_name}')",
                     value=f"{new_score:.0f}/100",
-                    delta=f"{score_delta:+.0f} points"
+                    delta=f"{score_delta:+.1f} points"
                 )
             
-            # --- 4. THIS IS THE NEW "WHY" SECTION ---
+            # 5. CALL THE "WHY" AGENT (AGENT 7)
             st.markdown("---")
             st.markdown("#### 💡 Asha's Analysis")
             
-            # We need the full report and summary to give the agent context
             report_json = result.model_dump_json()
             patient_summary = result.patient_summary
             
@@ -337,48 +359,51 @@ streamlit run streamlit_app.py
                     current_score=current_score,
                     new_score=new_score
                 )
-                # Display the AI's personalized text response
                 st.info(analysis_text) 
 
-            # --- 5. THIS IS THE "SHOW MATH" SECTION ---
+            # 6. SHOW THE DETAILED MATH
             with st.expander("Show Detailed Score Calculation..."):
                 st.markdown("#### How Your Score is Calculated")
                 st.markdown(
-                    "Your score is based on a formula that gives **full credit (100%)** "
-                    "for 'Completed' tasks and **partial credit (50%)** for tasks that "
-                    "'Need Confirmation'."
+                    "Your score is weighted by urgency: **🔴 High = 3 pts**, **🟡 Medium = 2 pts**, **🟢 Low = 1 pt**. "
+                    "'Needs Confirmation' tasks get 50% credit."
                 )
                 st.code(
-                    "Completed_Score = (Completed_Tasks / Total_Tasks) * 100\n"
-                    "Confirmation_Score = (Needs_Confirmation_Tasks / Total_Tasks) * 50\n"
-                    "Final_Score = Completed_Score + Confirmation_Score",
+                    "Earned_Points = (Completed_Points) + (Confirmation_Points * 0.5)\n"
+                    "Final_Score = (Earned_Points / Total_Possible_Points) * 100",
                     language="python"
                 )
                 
                 st.markdown("---")
                 
                 st.markdown("##### 1. Your Current Score Calculation")
-                current_base_score = (current_completed / current_total) * 100
-                current_partial_score = (current_needs_confirm / current_total) * 50
+                current_score_data = utils.calculate_weighted_health_engagement_score(result.activity_assessments)
                 st.markdown(
-                    f"* **Completed Score:** (`{current_completed}` / `{current_total}`) * 100 = **`{current_base_score:.1f}`** points\n"
-                    f"* **Confirmation Score:** (`{current_needs_confirm}` / `{current_total}`) * 50 = **`{current_partial_score:.1f}`** points\n"
-                    f"* **Final Score:** `{current_base_score:.1f}` + `{current_partial_score:.1f}` = **`{current_score:.1f}`**"
+                    f"* **Points Earned:** `{current_score_data['earned_points']:.1f}`\n"
+                    f"* **Total Possible:** `{current_score_data['total_possible']}`\n"
+                    f"* **Final Score:** (`{current_score_data['earned_points']:.1f}` / `{current_score_data['total_possible']}`) * 100 = **`{current_score_data['score']:.1f}`**"
                 )
                 
                 st.markdown("---")
 
                 st.markdown("##### 2. Your Simulated Score Calculation")
-                new_base_score = (new_completed_count / current_total) * 100
-                new_partial_score = (current_needs_confirm / current_total) * 50
                 st.markdown(
-                    f"* **Completed Score:** (`{new_completed_count}` / `{current_total}`) * 100 = **`{new_base_score:.1f}`** points\n"
-                    f"* **Confirmation Score:** (`{current_needs_confirm}` / `{current_total}`) * 50 = **`{new_partial_score:.1f}`** points\n"
-                    f"* **Final Score:** `{new_base_score:.1f}` + `{new_partial_score:.1f}` = **`{new_score:.1f}`**"
+                    f"* **Points Earned:** `{new_score_data['earned_points']:.1f}`\n"
+                    f"* **Total Possible:** `{new_score_data['total_possible']}`\n"
+                    f"* **Final Score:** (`{new_score_data['earned_points']:.1f}` / `{new_score_data['total_possible']}`) * 100 = **`{new_score_data['score']:.1f}`**"
+                )
+                
+                st.markdown("---")
+                
+                st.markdown("#### Why Your Score Changed (The Math)")
+                st.success(
+                    f"By completing '{selected_name}' (a **{selected_activity.urgency}-urgency** task), "
+                    f"you earned **{new_score_data['earned_points'] - current_score_data['earned_points']:.1f}** more points, "
+                    f"boosting your total score."
                 )
     
     # ===============================================
-    # == 4. REPORT DISPLAY & CHATBOT (NEW!) ==
+    # == 4. REPORT DISPLAY & CHATBOT ==
     # ===============================================
     
     # This section only appears AFTER a report has been generated and stored in session_state
@@ -390,64 +415,68 @@ streamlit run streamlit_app.py
         st.divider()
         st.markdown("## 📊 Health Engagement Report")
         
-        # --- This is all the report display code cut from the other functions ---
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.metric("Health Engagement Score", f"{result.health_engagement_score:.0f}/100", 
-                      help="Overall score based on completed preventive care activities")
+                        help="Overall score based on completed preventive care activities")
         
         with col2:
             st.metric("Completed Activities", f"{result.completed_count}/{result.total_activities}",
-                      help="Number of fully completed health activities")
+                        help="Number of fully completed health activities")
         
         with col3:
             completion_rate = (result.completed_count / result.total_activities * 100) if result.total_activities > 0 else 0
             st.metric("Completion Rate", f"{completion_rate:.0f}%",
-                      help="Percentage of activities marked as completed")
+                        help="Percentage of activities marked as completed")
         
         # Activity breakdown
         st.markdown("### 📋 Activity Assessment Details")
+        st.caption("Activities are automatically prioritized by urgency: 🔴 Urgent, 🟡 Soon, 🟢 Routine")
         
         # Group by status (use the enum for reliable comparison)
         completed = [a for a in result.activity_assessments if a.status == HealthActivityStatus.COMPLETED]
         recommended = [a for a in result.activity_assessments if a.status == HealthActivityStatus.RECOMMENDED]
         needs_confirmation = [a for a in result.activity_assessments if a.status == HealthActivityStatus.NEEDS_CONFIRMATION]
+
+        # --- NEW: Sort all lists by urgency ---
+        completed.sort(key=lambda x: (x.urgency == 'High', x.urgency == 'Medium'), reverse=True)
+        recommended.sort(key=lambda x: (x.urgency == 'High', x.urgency == 'Medium'), reverse=True)
+        needs_confirmation.sort(key=lambda x: (x.urgency == 'High', x.urgency == 'Medium'), reverse=True)
+
         
         # Display completed activities
         if completed:
             st.markdown("#### ✅ Completed Activities")
             for activity in completed:
-                with st.expander(f"✅ {activity.recommendation_short_str}"):
+                # --- THIS IS THE CRITICAL UPDATE (Urgency Emoji) ---
+                emoji = get_urgency_emoji(activity.urgency)
+                with st.expander(f"✅ {emoji} {activity.recommendation_short_str}"):
                     col1, col2 = st.columns([2, 1])
-                
-                with col1:
-                    st.markdown(f"**Category:** {activity.category}")
-                    if activity.supporting_evidence:
-                        st.markdown("**Evidence Found:**")
-                        st.info(activity.supporting_evidence)
-                
-                with col2:
-                    st.success(f"**Status:** {activity.status}")
                     
-                    # --- THIS IS THE CRITICAL UPDATE ---
-                    if activity.confidence_score:
-                        st.caption(f"**AI Confidence:** {activity.confidence_score}%")
-                    # ---------------------------------
-                        
-                    if activity.completion_date:
-                        st.caption(f"Completed on: {activity.completion_date}")
+                    with col1:
+                        st.markdown(f"**Category:** {activity.category}")
+                        if activity.supporting_evidence:
+                            st.markdown("**Evidence Found:**")
+                            st.info(activity.supporting_evidence)
+                    
+                    with col2:
+                        st.success(f"**Status:** {activity.status}")
+                        st.caption(f"**Urgency:** {activity.urgency}") # <-- Show text
+                        if activity.confidence_score:
+                            st.caption(f"**AI Confidence:** {activity.confidence_score}%")
+                        if activity.completion_date:
+                            st.caption(f"Completed on: {activity.completion_date}")
         
         # Display recommended activities
         if recommended:
             st.markdown("#### 💡 Recommended Activities")
             for activity in recommended:
-                with st.expander(f"💡 {activity.recommendation_short_str}"):
-
-                    # --- THIS IS THE CRITICAL UPDATE ---
+                emoji = get_urgency_emoji(activity.urgency)
+                with st.expander(f"💡 {emoji} {activity.recommendation_short_str}"):
+                    st.caption(f"**Urgency:** {activity.urgency}") # <-- Show text
                     if activity.confidence_score:
                         st.caption(f"**AI Confidence:** {activity.confidence_score}%")
-
                     st.markdown(f"**Description:** {activity.recommendation_long_str}")
                     st.markdown(f"**Category:** {activity.category}")
                     st.markdown(f"**Frequency:** {activity.frequency_short_str}")
@@ -457,11 +486,11 @@ streamlit run streamlit_app.py
         if needs_confirmation:
             st.markdown("#### ❓ Activities Needing Confirmation")
             for activity in needs_confirmation:
-                with st.expander(f"❓ {activity.recommendation_short_str}"):
+                emoji = get_urgency_emoji(activity.urgency)
+                with st.expander(f"❓ {emoji} {activity.recommendation_short_str}"):
                     st.markdown(f"**Description:** {activity.recommendation_long_str}")
                     st.markdown(f"**Category:** {activity.category}")
-
-                    # --- THIS IS THE CRITICAL UPDATE ---
+                    st.caption(f"**Urgency:** {activity.urgency}") # <-- Show text
                     if activity.confidence_score:
                         st.caption(f"**AI Confidence:** {activity.confidence_score}%")
                     

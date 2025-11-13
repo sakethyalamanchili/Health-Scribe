@@ -8,28 +8,22 @@ from pathlib import Path
 from typing import List, Dict, Any
 from datetime import datetime
 import config
+from models import HealthActivityAssessmentOutput, HealthActivityStatus
 
 
 def deidentify_patient_data(text: str) -> str:
     """
     De-identify patient data using HIPAA Safe Harbor method.
     Removes 18 PHI identifiers to make data safe for API calls.
-    
-    Args:
-        text: Raw patient health record text
-        
-    Returns:
-        De-identified text safe for processing
     """
     deidentified = text
     
-    # Remove names (simple pattern - would be more sophisticated in production)
-    name_patterns = [
-        r'\b[A-Z][a-z]+ [A-Z][a-z]+\b',  # First Last
-        r'\bMr\.|Mrs\.|Ms\.|Dr\. [A-Z][a-z]+\b',  # Titles with names
-    ]
-    for pattern in name_patterns:
-        deidentified = re.sub(pattern, '[NAME]', deidentified)
+    # Simple regex for PII (names, dates, phones, etc.)
+    # In a real app, this would be much more robust.
+    
+    # Remove names (simple pattern)
+    deidentified = re.sub(r'\b[A-Z][a-z]+ [A-Z][a-z]+\b', '[NAME]', deidentified)
+    deidentified = re.sub(r'\bMr\.|Mrs\.|Ms\.|Dr\. [A-Z][a-z]+\b', '[NAME]', deidentified)
     
     # Remove dates (keep year for age calculation, remove month/day)
     deidentified = re.sub(
@@ -46,7 +40,7 @@ def deidentify_patient_data(text: str) -> str:
     
     # Remove phone numbers
     deidentified = re.sub(
-        r'\b(\d{3}[-.]?\d{3}[-.]?\d{4}|$$\d{3}$$\s*\d{3}[-.]?\d{4})\b',
+        r'\b(\d{3}[-.]?\d{3}[-.]?\d{4}|\(\d{3}\)\s*\d{3}[-.]?\d{4})\b',
         '[PHONE]',
         deidentified
     )
@@ -59,21 +53,17 @@ def deidentify_patient_data(text: str) -> str:
     )
     
     # Remove SSN
-    deidentified = re.sub(
-        r'\b\d{3}-\d{2}-\d{4}\b',
-        '[SSN]',
-        deidentified
-    )
+    deidentified = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[SSN]', deidentified)
     
     # Remove medical record numbers (MRN)
     deidentified = re.sub(
-        r'\b(MRN|Medical Record Number|Record #|Patient ID)[:\s]*[A-Z0-9-]+\b',
+        r'\b(MRN|Record #|Patient ID)[:\s]*[A-Z0-9-]+\b',
         '[MRN]',
         deidentified,
         flags=re.IGNORECASE
     )
     
-    # Remove specific addresses (keep city/state for demographic info)
+    # Remove specific addresses
     deidentified = re.sub(
         r'\b\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct)\b',
         '[ADDRESS]',
@@ -81,7 +71,7 @@ def deidentify_patient_data(text: str) -> str:
         flags=re.IGNORECASE
     )
     
-    # Remove ZIP codes (keep first 3 digits for regional info if needed)
+    # Remove ZIP codes
     deidentified = re.sub(r'\b\d{5}(-\d{4})?\b', '[ZIP]', deidentified)
     
     return deidentified
@@ -90,12 +80,6 @@ def deidentify_patient_data(text: str) -> str:
 def load_patient_record(file_path: Path) -> str:
     """
     Load patient health record from file.
-    
-    Args:
-        file_path: Path to patient record file
-        
-    Returns:
-        Patient record text
     """
     if not file_path.exists():
         raise FileNotFoundError(f"Patient record not found: {file_path}")
@@ -107,12 +91,6 @@ def load_patient_record(file_path: Path) -> str:
 def load_uspstf_guidelines(file_path: Path) -> List[Dict[str, Any]]:
     """
     Load USPSTF guidelines from JSON file.
-    
-    Args:
-        file_path: Path to USPSTF guidelines JSON
-        
-    Returns:
-        List of guideline dictionaries
     """
     if not file_path.exists():
         return []
@@ -128,14 +106,7 @@ def filter_uspstf_by_demographics(
 ) -> List[Dict[str, Any]]:
     """
     Filter USPSTF guidelines by patient demographics.
-    
-    Args:
-        guidelines: Full list of USPSTF guidelines
-        age: Patient age
-        sex: Patient sex
-        
-    Returns:
-        Filtered guidelines applicable to patient
+    (This is a simple filter for the demo)
     """
     if not guidelines:
         return []
@@ -144,7 +115,7 @@ def filter_uspstf_by_demographics(
     for guideline in guidelines:
         population = guideline.get('population', '').lower()
         
-        # Simple age filtering (would be more sophisticated in production)
+        # Simple age filtering
         if age:
             if 'adults' in population and age >= 18:
                 filtered.append(guideline)
@@ -161,50 +132,59 @@ def filter_uspstf_by_demographics(
     return filtered if filtered else guidelines[:10]  # Return top 10 if no match
 
 
-def calculate_health_engagement_score(
-    completed: int,
-    total: int,
-    needs_confirmation: int
-) -> float:
+# --- FUNCTION NAME RENAMED TO FIX BUG ---
+def calculate_weighted_health_engagement_score(
+    activity_assessments: List[HealthActivityAssessmentOutput]
+) -> dict:
     """
-    Calculate health engagement score (0-100).
+    Calculate a realistic, WEIGHTED health engagement score (0-100).
     
-    Formula:
-    - Completed activities contribute 100%
-    - Activities needing confirmation contribute 50% (partial credit)
-    - Higher weight for having more activities tracked
-    
-    Args:
-        completed: Number of completed activities
-        total: Total number of activities
-        needs_confirmation: Number of activities needing confirmation
+    High-urgency tasks are worth more points than low-urgency tasks.
+    """
+    if not activity_assessments:
+        return {"score": 0.0, "earned_points": 0, "total_possible": 0}
+
+    # --- NEW: Urgency Weights ---
+    weights = {
+        "High": 3,
+        "Medium": 2,
+        "Low": 1
+    }
+
+    total_possible_points = 0
+    earned_points = 0.0
+
+    for assessment in activity_assessments:
+        # Get the point value for this task
+        urgency = assessment.urgency or "Medium"  # Default to Medium if missing
+        task_points = weights.get(urgency, 2)  # Default to 2
         
-    Returns:
-        Health engagement score (0-100)
-    """
-    if total == 0:
-        return 0.0
+        # Add to the total possible score
+        total_possible_points += task_points
+
+        # Add to the earned score based on status
+        if assessment.status == HealthActivityStatus.COMPLETED:
+            earned_points += task_points  # 100% credit
+        elif assessment.status == HealthActivityStatus.NEEDS_CONFIRMATION:
+            earned_points += (task_points * 0.5)  # 50% credit
+        # 'Recommended' tasks earn 0 points
+
+    if total_possible_points == 0:
+        return {"score": 0.0, "earned_points": 0, "total_possible": 0}
+
+    # Calculate final percentage
+    score = (earned_points / total_possible_points) * 100
     
-    # Base score from completion
-    base_score = (completed / total) * 100
-    
-    # Bonus for partially completed (needs confirmation)
-    partial_score = (needs_confirmation / total) * 50
-    
-    # Combine scores
-    raw_score = base_score + partial_score
-    
-    # Cap at 100
-    return min(raw_score, 100.0)
+    return {
+        "score": score,
+        "earned_points": earned_points,
+        "total_possible": total_possible_points
+    }
 
 
 def save_output(output_data: Dict[str, Any], filename: str = None):
     """
     Save assessment output to JSON file.
-    
-    Args:
-        output_data: Assessment data to save
-        filename: Output filename (auto-generated if None)
     """
     if filename is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')

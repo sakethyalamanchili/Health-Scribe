@@ -141,6 +141,13 @@ class HealthAssessmentOrchestrator:
         # ========== STEP 6: CALCULATE METRICS ==========
         print("Step 6: Calculating health engagement score...")
         
+        # --- THIS IS THE UPDATED SCORING CALL ---
+        # It now calls your new weighted score function
+        score_data = utils.calculate_weighted_health_engagement_score(activity_assessments)
+        health_score = score_data["score"]
+        # ----------------------------------------
+        
+        # We still need the simple counts for the UI display
         completed_count = sum(
             1 for a in activity_assessments
             if a.status == HealthActivityStatus.COMPLETED
@@ -154,14 +161,8 @@ class HealthAssessmentOrchestrator:
             if a.status == HealthActivityStatus.NEEDS_CONFIRMATION
         )
         
-        health_score = utils.calculate_health_engagement_score(
-            completed=completed_count,
-            total=len(activity_assessments),
-            needs_confirmation=needs_confirmation_count
-        )
-        
-        print(f"  Health Engagement Score: {health_score:.1f}/100")
-        print(f"  Completed: {completed_count}, Recommended: {recommended_count}, Needs Confirmation: {needs_confirmation_count}")
+        print(f"  Weighted Health Engagement Score: {health_score:.1f}/100")
+        print(f"  Task Counts: Completed: {completed_count}, Recommended: {recommended_count}, Needs Confirmation: {needs_confirmation_count}")
         
         # ========== STEP 7: BUILD FINAL OUTPUT ==========
         final_output = HealthAssessmentOutput(
