@@ -1,0 +1,207 @@
+Here is another realistic, sample patient record for a completely different demographic, as requested.
+
+---
+
+PATIENT HEALTH RECORD - DEMONSTRATION FILE
+===========================================
+
+PATIENT INFORMATION
+-------------------
+Name: Jane Alice Williams
+Date of Birth: 05/20/1944 (Age: 80)
+Sex: Female
+MRN: MRN-2024-112358
+Address: 850 Heritage Pine Ave, Apt 214, Boca Raton, FL 33431
+Phone: (561) 555-0102
+Email: N/A (Son (Mark) is primary contact: (561) 555-0103)
+Emergency Contact: Mark Williams (Son)
+
+PRIMARY CARE PHYSICIAN
+----------------------
+Dr. Emily Chen, MD (Geriatrics)
+Boca Raton Senior Health Partners
+Phone: (561) 555-4000
+
+CHIEF COMPLAINTS & MEDICAL HISTORY
+-----------------------------------
+Patient is an 80-year-old female presenting for a 6-month follow-up, accompanied by her son, Mark. Son reports concerns about patient's increasing forgetfulness and one recent fall without serious injury.
+
+PAST MEDICAL HISTORY:
+- Atrial Fibrillation (Chronic, diagnosed 2017)
+- Essential Hypertension (diagnosed 2005)
+- Osteoporosis (diagnosed 2010, T-score -2.8)
+- Osteoarthritis (Bilateral knees and hips)
+- GERD (Gastroesophageal Reflux Disease)
+- Hypothyroidism (Subclinical, diagnosed 2015)
+- Chronic Venous Insufficiency (Mild)
+- Macular Degeneration (Dry, early)
+
+SURGICAL HISTORY:
+- Cholecystectomy (Gallbladder removal, 1995)
+- Cataract Surgery (Bilateral, 2019 & 2020)
+- Left Hip Hemiarthroplasty (after fall/fracture, 2016)
+
+FAMILY HISTORY:
+- Mother: Died at 88 from complications of Alzheimer's Disease
+- Father: Died at 75 from Stroke
+- Sister: Alive, age 78, history of Hypertension
+
+SOCIAL HISTORY:
+- Marital Status: Widowed (since 2008)
+- Living Situation: Lives alone in a senior apartment community
+- Smoking: Never smoked
+- Alcohol: 1 glass of wine, 1-2 times per month
+- Exercise: Walks 15-20 minutes daily with a cane, attends water aerobics 1x/week
+- Diet: Generally healthy, son assists with groceries
+
+CURRENT MEDICATIONS
+-------------------
+1. Apixaban (Eliquis) 5mg twice daily (Atrial Fibrillation)
+2. Amlodipine 5mg once daily (Hypertension)
+3. Atorvastatin 20mg once daily (Hyperlipidemia/Stroke prevention)
+4. Omeprazole 20mg once daily (GERD)
+5. Levothyroxine 50mcg once daily (Hypothyroidism)
+6. Denosumab (Prolia) 60mg injection every 6 months (Osteoporosis, last admin 08/2024)
+7. Calcium + Vitamin D3 (1200mg / 1000 IU) daily
+8. Acetaminophen (Tylenol) 650mg PRN (as needed) for arthritis pain
+
+ALLERGIES
+---------
+- Codeine (Nausea, vomiting)
+- Contrast Dye (Anaphylaxis, 2005)
+
+VITAL SIGNS (Current Visit - 11/12/2024)
+-----------------------------------------
+Blood Pressure: 130/78 mmHg (L-arm, seated)
+Heart Rate: 74 bpm (Irregularly irregular)
+Temperature: 97.9°F
+Respiratory Rate: 16 breaths/min
+Height: 5'3" (160 cm) (Previous 5'5")
+Weight: 135 lbs (61.2 kg)
+BMI: 24.0 (Normal)
+SpO2: 98% on room air
+
+RECENT LABORATORY RESULTS
+--------------------------
+Date: 10/30/2024
+
+Comprehensive Metabolic Panel:
+- Glucose (fasting): 98 mg/dL (normal)
+- HbA1c: 5.6% (normal)
+- Creatinine: 1.0 mg/dL
+- eGFR: 62 mL/min/1.73m² (Stage 3a CKD)
+- Sodium: 140 mEq/L (normal)
+- Potassium: 4.1 mEq/L (normal)
+- ALT: 22 U/L (normal)
+
+Lipid Panel:
+- Total Cholesterol: 160 mg/dL
+- LDL: 85 mg/dL (at goal)
+- HDL: 60 mg/dL (good)
+- Triglycerides: 75 mg/dL (good)
+
+Complete Blood Count:
+- WBC: 6.1 K/uL (normal)
+- Hemoglobin: 12.8 g/dL (normal)
+- Platelets: 210 K/uL (normal)
+
+Thyroid Function:
+- TSH: 3.8 mIU/L (within therapeutic range)
+
+Vitamin Levels:
+- Vitamin B12: 290 pg/mL (low-normal)
+- 25-OH Vitamin D: 45 ng/mL (sufficient)
+
+IMMUNIZATION HISTORY
+--------------------
+- COVID-19: Updated Booster received 09/2024
+- Influenza (High-Dose): Received 10/2024
+- Pneumococcal (Prevnar 20): Received 2023
+- Shingrix (Shingles): Series completed 2019
+- Tdap: Received 2021
+
+PREVENTIVE HEALTH SCREENINGS
+-----------------------------
+Colorectal Cancer Screening:
+- Colonoscopy at age 75 (2019)
+- Results: Normal, few diverticula
+- Next screening: **Screening discontinued** (per patient preference and guidelines)
+
+Cardiovascular Screening:
+- EKG performed today: Atrial Fibrillation, rate controlled, no acute ST changes
+- Echocardiogram (2023): LVEF 60%, mild diastolic dysfunction, mild mitral regurgitation
+
+Bone Health:
+- DEXA Scan (08/2023): Spine T-score -2.8, Hip T-score -2.5 (Osteoporosis)
+- Receiving Prolia injections
+
+Cognitive Screening:
+- MOCA (Montreal Cognitive Assessment) performed today: Score 24/30 (mild impairment noted in delayed recall and executive function)
+
+Other Screenings:
+- Annual Vision Exam: 07/2024 (Dry macular degeneration, stable)
+- Annual Hearing Exam: 07/2024 (Mild presbycusis, uses hearing aids)
+- Depression screening (PHQ-9): Score 2 (minimal symptoms)
+- Last dental exam: 06/2024
+
+CLINICAL NOTES - Current Visit (11/12/2024)
+--------------------------------------------
+SUBJECTIVE:
+Patient presents for follow-up, accompanied by son Mark. Patient states she feels "pretty good for 80" but admits to "feeling more wobbly" and is fearful of falling again, especially after a minor fall 2 weeks ago (tripped on rug, no injury). Son, Mark, expresses concern about her short-term memory, noting she missed 2-3 medication doses last week and has been asking repetitive questions. Patient denies chest pain, SOB, or dizziness. Reports knee stiffness, managed with Tylenol.
+
+OBJECTIVE:
+Alert and pleasant 80-year-old female. Vitals stable, BP at goal. EKG shows A-fib, rate 74. Cardiovascular: Irregularly irregular rhythm, 1/6 systolic murmur. Respiratory: Clear. Extremities: 1+ pedal edema bilaterally (chronic). Gait: Slow, uses a single-point cane, slightly unsteady on turns. MOCA score 24/30, down from 27/30 last year.
+
+ASSESSMENT:
+1. Atrial Fibrillation: Chronic, stable, rate-controlled, anticoagulated.
+2. Hypertension: Well-controlled on Amlodipine.
+3. Osteoporosis: High-risk, on appropriate therapy (Prolia).
+4. Mild Cognitive Impairment: New finding, likely progressing. Son's report of missed medications is a concern.
+5. High Fall Risk: Secondary to osteoporosis, osteoarthritis, unsteady gait, and possible cognitive changes.
+6. Osteoarthritis: Chronic, stable, managed with Acetaminophen.
+
+PLAN:
+1. Cognitive Decline: MOCA score and son's report are concerning.
+    - Start Vitamin B12 1000mcg daily supplement (level is low-normal).
+    - Discussed 7-day pill organizer box, son will set this up.
+    - Formal referral to Neurology for cognitive assessment and to rule out reversible causes.
+2. Fall Risk:
+    - Referral to Physical Therapy (PT) for balance training and gait assessment.
+    - Discussed home safety evaluation (removing throw rugs, adding grab bars).
+3. Medications:
+    - Continue all current medications. Emphasized importance of adherence, especially Apixaban (Eliquis) for stroke prevention.
+    - Administer Prolia injection in-office today (due 02/2025, *Correction: Not due today, next due 02/2025. Will schedule*).
+4. Follow-up: Re-check in 3 months. Call sooner if any additional falls or acute cognitive changes.
+
+PATIENT EDUCATION:
+- Reviewed fall prevention strategies with patient and son.
+- Emphasized importance of medication adherence using a pill box.
+- Discussed MOCA results and plan for neurology referral.
+
+Signed: Dr. Emily Chen, MD
+Date: 11/12/2024
+
+---
+
+PROGRESS NOTES - Previous Visits
+---------------------------------
+
+Visit: 08/15/2024
+- Routine follow-up, Prolia injection
+- BP: 134/80 mmHg
+- Weight: 136 lbs
+- No new complaints. Injection administered.
+
+Visit: 05/10/2024
+- Annual physical
+- Labs reviewed, TSH stable.
+- Scheduled DEXA and vision/hearing exams.
+
+Visit: 01/20/2024
+- Complaint: Mild URI symptoms (cough, congestion)
+- Exam: Consistent with viral URI.
+- Treatment: Supportive care, rest, fluids.
+
+---
+
+END OF RECORD

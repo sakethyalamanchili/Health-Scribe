@@ -305,10 +305,22 @@ streamlit run streamlit_app.py
             st.markdown("#### ✅ Completed Activities")
             for activity in completed:
                 with st.expander(f"✅ {activity.recommendation_short_str}"):
+                    col1, col2 = st.columns([2, 1])
+                
+                with col1:
                     st.markdown(f"**Category:** {activity.category}")
                     if activity.supporting_evidence:
                         st.markdown("**Evidence Found:**")
                         st.info(activity.supporting_evidence)
+                
+                with col2:
+                    st.success(f"**Status:** {activity.status}")
+                    
+                    # --- THIS IS THE CRITICAL UPDATE ---
+                    if activity.confidence_score:
+                        st.caption(f"**AI Confidence:** {activity.confidence_score}%")
+                    # ---------------------------------
+                        
                     if activity.completion_date:
                         st.caption(f"Completed on: {activity.completion_date}")
         
@@ -317,6 +329,11 @@ streamlit run streamlit_app.py
             st.markdown("#### 💡 Recommended Activities")
             for activity in recommended:
                 with st.expander(f"💡 {activity.recommendation_short_str}"):
+
+                    # --- THIS IS THE CRITICAL UPDATE ---
+                    if activity.confidence_score:
+                        st.caption(f"**AI Confidence:** {activity.confidence_score}%")
+
                     st.markdown(f"**Description:** {activity.recommendation_long_str}")
                     st.markdown(f"**Category:** {activity.category}")
                     st.markdown(f"**Frequency:** {activity.frequency_short_str}")
@@ -329,6 +346,10 @@ streamlit run streamlit_app.py
                 with st.expander(f"❓ {activity.recommendation_short_str}"):
                     st.markdown(f"**Description:** {activity.recommendation_long_str}")
                     st.markdown(f"**Category:** {activity.category}")
+
+                    # --- THIS IS THE CRITICAL UPDATE ---
+                    if activity.confidence_score:
+                        st.caption(f"**AI Confidence:** {activity.confidence_score}%")
                     
                     if activity.user_input_questions:
                         st.markdown("**Please answer these questions to clarify:**")

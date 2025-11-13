@@ -46,31 +46,17 @@ class HealthActivityRecommendationList(BaseModel):
         description="List of consolidated, deduplicated health activities"
     )
 
-
-# class HealthActivityAssessmentOutput(BaseModel):
-#     """Assessment result for a single health activity"""
-#     activity_id: str = Field(description="ID of the activity being assessed")
-#     recommendation_short_str: str = Field(description="Activity name")
-#     status: HealthActivityStatus = Field(
-#         description="Completion status of this activity"
-#     )
-#     supporting_evidence: str = Field(
-#         description="Evidence from patient record supporting this status"
-#     )
-#     user_input_questions: List[str] = Field(
-#         default=[],
-#         description="Questions for the user if confirmation is needed"
-#     )
-#     completion_date: Optional[str] = Field(
-#         default=None,
-#         description="Date of completion if found in record"
-#     )
-
 # In models.py
 class HealthActivityAssessmentOutput(BaseModel):
     """Assessment result for a single health activity"""
     activity_id: str = Field(description="ID of the activity being assessed")
     recommendation_short_str: str = Field(description="Activity name")
+
+    # --- This is our new field ---
+    confidence_score: Optional[int] = Field(
+        default=None,
+        description="Confidence in this assessment (0-100)"
+    )
     
     # --- ADD THESE 3 FIELDS ---
     recommendation_long_str: str = Field(description="Detailed activity description", default="")
