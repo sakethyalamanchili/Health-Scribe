@@ -135,19 +135,21 @@ streamlit run streamlit_app.py
     tab1, tab2, tab3 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works"])
     
     with tab1:
-        st.header("Upload Health Record")
-        st.markdown("Upload a patient's health record to analyze their health engagement and receive personalized recommendations.")
+        st.header("Upload Health Records")
+        st.markdown("Upload all of your .txt health records from different doctors. Asha will unify them.")
         
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            uploaded_file = st.file_uploader(
-                "Choose a text file containing health records",
+            # --- THIS IS THE SIMPLIFIED UPLOADER ---
+            uploaded_text_files = st.file_uploader(
+                "Upload Text Files (.txt)",
                 type=['txt'],
-                help="Upload a plain text file with health information"
+                accept_multiple_files=True
             )
+            # ----------------------------------------
             
-            if not uploaded_file:
+            if not uploaded_text_files:
                 st.info("💡 Don't have a file? Click 'View Demo' tab to see a sample analysis!")
         
         with col2:
@@ -161,16 +163,18 @@ streamlit run streamlit_app.py
             st.markdown("✓ No data storage")
             st.markdown("✓ Secure processing")
         
-        if uploaded_file:
+        # --- THIS LOGIC IS NOW SIMPLIFIED ---
+        if uploaded_text_files:
             st.divider()
             
-            with st.expander("📝 View Uploaded Content"):
-                content = uploaded_file.read().decode('utf-8')
-                st.text_area("Health Record Content", content, height=200, disabled=True)
-                uploaded_file.seek(0)  # Reset file pointer
+            with st.expander("📝 View Uploaded Files"):
+                st.markdown("**Text Files:**")
+                for f in uploaded_text_files:
+                    st.caption(f.name)
             
-            if st.button("🚀 Analyze Health Record", use_container_width=True):
-                process_health_record(uploaded_file)
+            if st.button("🚀 Analyze All Records", use_container_width=True):
+                # We pass the list of text files
+                process_health_record(text_files=uploaded_text_files)
     
     with tab2:
         st.header("Demo Analysis")
@@ -199,37 +203,30 @@ streamlit run streamlit_app.py
         Project Asha uses a deterministic pipeline of 5 specialized AI agents (plus a 6th for chat):
         """)
         
-        # --- THIS AGENT LIST IS NOW CORRECTED TO MATCH YOUR CODE ---
         agents = [
             {
-                "name": "1. Summarization Agent",
+                "name": "1. Unifier & Summarizer Agent",
                 "icon": "📝",
-                "description": "Extracts demographics and conditions, creating 'basic' and 'advanced' patient summaries.",
+                "description": "Combines all text files into a single 'master record', then creates a structured summary.",
                 "output": "PatientSummary model (age, sex, summaries)"
             },
             {
-                "name": "2. Web Recommendation Agent",
+                "name": "2. Recommendation Agents (RAG + Web)",
                 "icon": "🌐",
-                "description": "Generates general and condition-specific recommendations based on the LLM's broad knowledge.",
-                "output": "List of HealthActivityRecommendation"
+                "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
+                "output": "Two lists of HealthActivityRecommendation"
             },
             {
-                "name": "3. USPSTF RAG Agent",
-                "icon": "🏥",
-                "description": "Performs RAG to find and format recommendations from the USPSTF guidelines database.",
-                "output": "Evidence-based list of HealthActivityRecommendation"
-            },
-            {
-                "name": "4. Consolidation Agent",
+                "name": "3. Consolidation Agent",
                 "icon": "🔄",
                 "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
                 "output": "A single, clean list of unique activities"
             },
             {
-                "name": "5. Assessment Agent (The 'Brain')",
+                "name": "4. Self-Correcting Assessment Agent",
                 "icon": "🧠",
-                "description": "Uses fuzzy reasoning to analyze the patient record for each activity to determine its status.",
-                "output": "Assessment with status ('Completed', 'Recommended', 'Needs user confirmation')"
+                "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, and corrects it if needed.",
+                "output": "Final assessment with status and confidence score"
             }
         ]
         
@@ -399,10 +396,8 @@ streamlit run streamlit_app.py
             st.session_state.messages.append({"role": "assistant", "content": response})
 
 
-def process_health_record(uploaded_file):
+def process_health_record(text_files):
     """Process uploaded health record through the agent pipeline"""
-    
-    content = uploaded_file.read().decode('utf-8')
     
     # Progress tracking
     progress_bar = st.progress(0)
@@ -421,13 +416,15 @@ def process_health_record(uploaded_file):
                 
                 st.markdown('<div class="agent-step">', unsafe_allow_html=True)
                 st.markdown("**🔄 Starting Pipeline**")
-                st.info("Processing through 5 specialized AI agents...")
+                st.info("Processing through 4 specialized AI agents...")
                 st.markdown('</div>', unsafe_allow_html=True)
                 
                 # Execute the full assessment
                 with st.spinner("Executing multi-agent pipeline..."):
-                    # Use the orchestrator from session state
-                    result = st.session_state.orchestrator.run_full_assessment(patient_record_text=content)
+                    # --- THIS IS THE SIMPLIFIED ORCHESTRATOR CALL ---
+                    result = st.session_state.orchestrator.run_full_assessment(
+                        text_files=text_files
+                    )
                 
                 progress_bar.progress(100)
                 status_text.text("✅ Analysis Complete!")

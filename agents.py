@@ -5,7 +5,7 @@ Each agent is specialized for a specific task in the pipeline
 
 import json
 from typing import List, Dict, Any, Optional
-from urllib import response
+# from urllib import response  <-- This line is not used
 import google.generativeai as genai
 import config
 from models import (
@@ -33,10 +33,32 @@ class AshaAgentSystem:
             "top_k": 40,
             "max_output_tokens": 8192,
         }
+
+        # --- THIS IS THE NEW SAFETY SETTINGS BLOCK ---
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE",
+            },
+        ]
+        # -----------------------------------------------
         
         self.model = genai.GenerativeModel(
             model_name=self.model_name,
             generation_config=generation_config,
+            safety_settings=safety_settings  # <-- THIS LINE IS ADDED
         )
     
     def _call_llm(
@@ -47,14 +69,6 @@ class AshaAgentSystem:
     ) -> Any:
         """
         Call Google Gemini LLM with system and user prompts.
-        
-        Args:
-            system_prompt: System instruction for the agent
-            user_prompt: User query/data for the agent
-            response_format: Pydantic model for structured output
-            
-        Returns:
-            LLM response text or structured JSON parsed into Pydantic model
         """
         # Combine system and user prompts for Gemini
         full_prompt = f"""{system_prompt}
@@ -85,22 +99,30 @@ Return ONLY the JSON, no additional text."""
                     response_text = response_text.split("```")[1].split("```")[0].strip()
                 
                 return response_format.model_validate_json(response_text)
+            
+            # --- THIS IS THE NEW, SAFER EXCEPT BLOCK ---
             except Exception as e:
                 print(f"Error parsing structured response: {e}")
-                print(f"Response text: {response.text[:500]}")
+                # This is safer - it prints the *reason* it failed
+                # instead of trying to access .text again.
+                print(f"Full response feedback: {response.prompt_feedback}")
                 raise
+            # ---------------------------------------------
         else:
-            return response.text
+            # This is for the chatbot, which wants a plain string
+            try:
+                return response.text
+            except Exception as e:
+                print(f"Error getting text response (likely safety block): {e}")
+                print(f"Full response feedback: {response.prompt_feedback}")
+                return "I'm sorry, I encountered an error and cannot provide a response at this time."
+
     
     # ========== AGENT 1: PATIENT SUMMARIZATION ==========
     
     def create_patient_summary(self, patient_data: str) -> PatientSummary:
         """
         Create basic and advanced patient summaries from health record.
-        
-        This agent extracts demographics and medical conditions to create
-        two summaries: basic (for general recommendations) and advanced
-        (for condition-specific recommendations).
         """
         system_prompt = """You are a medical data analyst specializing in patient record summarization.
 
@@ -143,13 +165,6 @@ If the record is incomplete, make reasonable inferences from available data."""
     ) -> List[HealthActivityRecommendation]:
         """
         Generate health recommendations using web search (or LLM knowledge).
-        
-        Args:
-            patient_summary: Patient demographic/medical summary
-            is_advanced: If True, use advanced summary for condition-specific advice
-            
-        Returns:
-            List of health activity recommendations
         """
         system_prompt = """You are a preventive health advisor. Generate evidence-based health activity recommendations.
 
@@ -166,10 +181,9 @@ Base recommendations on:
 - Professional society guidelines (AHA, ADA, etc.)
 
 Format each recommendation with:
-- recommendation_short_str: Brief title (max 80 chars)
-- recommendation_long_str: Detailed description
-# NEW - Explicit constraint
-- frequency_short_str: How often (e.g., "Annually", "Every 5 years"). **MUST be 40 characters or less.**
+- recommendation_short_str: Brief title. **MUST be 100 characters or less.**
+- recommendation_long_str: Detailed description.
+- frequency_short_str: How often (e.g., "Annually", "Every 5 years"). **MUST be 120 characters or less.**
 - category: Appropriate health category
 - source: Where this recommendation comes from"""
 
@@ -198,9 +212,6 @@ Focus on actionable, specific health activities."""
     ) -> List[HealthActivityRecommendation]:
         """
         Generate recommendations from USPSTF guidelines database (RAG approach).
-        
-        This agent performs Retrieval-Augmented Generation using the official
-        USPSTF guidelines to ground recommendations in evidence-based medicine.
         """
         if not uspstf_guidelines:
             return []
@@ -253,9 +264,6 @@ Be concise, accurate, and strictly follow the output format."""
     ) -> List[HealthActivityRecommendation]:
         """
         Consolidate and deduplicate recommendations from multiple sources.
-        
-        This agent performs semantic deduplication to merge similar
-        recommendations (e.g., "flu shot" and "influenza vaccine").
         """
         # Flatten all recommendations
         all_recs = []
@@ -283,9 +291,9 @@ When consolidating:
 1. Keep the most specific and clear wording.
 2. Combine sources (e.g., "CDC, USPSTF").
 3. **Frequency Handling (IMPORTANT):** The 'frequency_short_str' MUST be 120 characters or less.
-    - If frequencies are identical, use it.
-    - If frequencies are different (e.g., "Annually" and "Every 5 years"), pick the MOST frequent one (e.g., "Annually") or use a short, general term like "Varies" or "As directed".
-    - **Do NOT** combine them into a long string like "Annually; Every 5 years".
+   - If frequencies are identical, use it.
+   - If frequencies are different (e.g., "Annually" and "Every 5 years"), pick the MOST frequent one (e.g., "Annually") or use a short, general term like "Varies" or "As directed".
+   - **Do NOT** combine them into a long string like "Annually; Every 5 years".
 4. Generate a unique activity_id for each unique recommendation.
 
 Your output must be a deduplicated list with NO semantic duplicates and all fields must respect the length constraints."""
@@ -317,7 +325,7 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
         This is now a 2-STEP SELF-CORRECTION LOOP:
         1. "Assessor" agent generates a first draft.
         2. "Validator" agent reviews the draft for accuracy and provides a
-        final, corrected assessment.
+           final, corrected assessment.
         """
         
         # ========== STEP 1: THE "ASSESSOR" (FIRST DRAFT) ==========
@@ -425,7 +433,7 @@ Your final output MUST be a single, valid JSON object matching the 'HealthActivi
         return final_assessment
 
 
-# ========== AGENT 6: CONVERSATIONAL CHATBOT ==========
+    # ========== AGENT 6: CONVERSATIONAL CHATBOT ==========
     
     def run_chat_agent(
             self,

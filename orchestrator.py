@@ -9,7 +9,7 @@ from pathlib import Path
 import config
 import utils
 from agents import AshaAgentSystem
-from models import HealthAssessmentOutput, HealthActivityAssessmentOutput
+from models import HealthAssessmentOutput, HealthActivityAssessmentOutput, HealthActivityStatus
 
 
 class HealthAssessmentOrchestrator:
@@ -17,12 +17,12 @@ class HealthAssessmentOrchestrator:
     Orchestrates the deterministic multi-agent pipeline.
     
     Pipeline Steps:
-    0. De-identification (HIPAA compliance)
-    1. Ingestion (load patient data)
+    0. Ingestion (load and unify multiple .txt files)
+    1. De-identification (HIPAA compliance)
     2. Summarization (basic + advanced)
     3. Multi-source recommendations (web + USPSTF RAG)
     4. Consolidation (semantic deduplication)
-    5. Assessment (fuzzy reasoning for each activity)
+    5. Assessment (self-correcting loop for each activity)
     6. Score calculation and output
     """
     
@@ -32,33 +32,51 @@ class HealthAssessmentOrchestrator:
     
     def run_full_assessment(
         self,
-        patient_record_path: Path = None,
-        patient_record_text: str = None
+        text_files: list = None,
+        patient_record_text: str = None  # Kept for demo mode and testing
     ) -> HealthAssessmentOutput:
         """
         Run the complete health assessment pipeline.
         
-        Args:
-            patient_record_path: Path to patient record file
-            patient_record_text: Direct patient record text (alternative to file)
-            
-        Returns:
-            Complete health assessment with engagement score
+        This function now:
+        1. Ingests a list of text files.
+        2. Unifies them into a single "master record".
+        3. Passes the master record to the agent pipeline.
         """
-        # ========== STEP 0: LOAD RAW DATA ==========
+        
+        # ========== STEP 0: INGESTION & UNIFICATION ==========
+        print("Step 0: Ingesting and unifying all records...")
+        
+        all_text_fragments = []
+
+        # Case 1: Direct text (from demo button or main() test)
         if patient_record_text:
-            raw_patient_data = patient_record_text
-        elif patient_record_path:
-            raw_patient_data = utils.load_patient_record(patient_record_path)
-        else:
+            all_text_fragments.append(patient_record_text)
+            print("  Processing direct text input (Demo Mode)")
+
+        # Case 2: Files from Streamlit upload
+        if text_files:
+            for file in text_files:
+                content = file.read().decode('utf-8')
+                all_text_fragments.append(f"--- START OF FILE: {file.name} ---\n{content}\n--- END OF FILE ---\n")
+                print(f"  Ingested text file: {file.name}")
+
+        # Case 3: Fallback for command-line testing (if no files)
+        if not all_text_fragments:
+            print("  No files or text provided. Falling back to default demo file for testing.")
             raw_patient_data = utils.load_patient_record(config.PATIENT_DATA_FILE)
+        else:
+            # Create the single "Master Health Record"
+            raw_patient_data = "\n\n".join(all_text_fragments)
+            print(f"  Unified into one master record.")
+        
         
         # ========== STEP 1: DE-IDENTIFICATION ==========
-        print("Step 1: De-identifying patient data (HIPAA compliance)...")
+        print("Step 1: De-identifying master patient data (HIPAA compliance)...")
         patient_data = utils.deidentify_patient_data(raw_patient_data)
         
         # ========== STEP 2: PATIENT SUMMARIZATION ==========
-        print("Step 2: Creating patient summaries...")
+        print("Step 2: Creating patient summaries from master record...")
         patient_summary = self.agent_system.create_patient_summary(patient_data)
         print(f"  Basic: {patient_summary.basic_summary}")
         print(f"  Advanced: {patient_summary.advanced_summary}")
@@ -118,22 +136,22 @@ class HealthAssessmentOrchestrator:
             activity_assessments.append(assessment)
             print(f"    Status: {assessment.status}")
 
-            time.sleep(6)
+            time.sleep(6) # Keep this to respect the free-tier rate limit!
         
         # ========== STEP 6: CALCULATE METRICS ==========
         print("Step 6: Calculating health engagement score...")
         
         completed_count = sum(
             1 for a in activity_assessments
-            if a.status == "Completed"
+            if a.status == HealthActivityStatus.COMPLETED
         )
         recommended_count = sum(
             1 for a in activity_assessments
-            if a.status == "Recommended"
+            if a.status == HealthActivityStatus.RECOMMENDED
         )
         needs_confirmation_count = sum(
             1 for a in activity_assessments
-            if a.status == "Needs user confirmation"
+            if a.status == HealthActivityStatus.NEEDS_CONFIRMATION
         )
         
         health_score = utils.calculate_health_engagement_score(
@@ -174,6 +192,8 @@ def main():
     
     # Run full assessment
     try:
+        # This will call run_full_assessment() with no arguments
+        # The function will then use its fallback to load the demo file
         result = orchestrator.run_full_assessment()
         
         # Save output
