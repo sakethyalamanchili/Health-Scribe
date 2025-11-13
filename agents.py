@@ -30,7 +30,7 @@ class AshaAgentSystem:
             "temperature": self.temperature,
             "top_p": 0.95,
             "top_k": 40,
-            "max_output_tokens": 8192,
+            "max_output_tokens": 16384,
         }
 
         # --- THIS IS THE NEW SAFETY SETTINGS BLOCK ---

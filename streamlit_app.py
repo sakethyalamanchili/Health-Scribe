@@ -515,31 +515,32 @@ streamlit run streamlit_app.py
         st.divider()
         st.markdown("## 💬 Ask Asha About Your Report")
 
-        # Display existing chat messages
+        # 1. Display ALL messages from session state
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # Get new user input
+        # 2. Check for new user input
         if prompt := st.chat_input("Why do I need a colonoscopy?"):
-            # Add user message to history and display it
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            # Generate and display agent response
-            with st.chat_message("assistant"):
-                with st.spinner("Asha is thinking..."):
-                    # Use the orchestrator stored in session state
-                    response = st.session_state.orchestrator.agent_system.run_chat_agent(
-                        user_question=prompt,
-                        patient_summary=result.patient_summary,
-                        health_report_json=result.model_dump_json() # Give agent full context
-                    )
-                    st.markdown(response)
             
-            # Add agent response to history
+            # 3. Add the user's new message to state
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # 4. Call the AI agent to get a response
+            with st.spinner("Asha is thinking..."):
+                response = st.session_state.orchestrator.agent_system.run_chat_agent(
+                    user_question=prompt,
+                    patient_summary=result.patient_summary,
+                    health_report_json=result.model_dump_json() # Give agent full context
+                )
+            
+            # 5. Add the AI's response to state
             st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # 6. Force a re-run from the top
+            # This will clear the input box and run the "Display ALL messages"
+            # loop (step 1) to render the new Q&A
+            st.rerun()
 
 
 def process_health_record(text_files):

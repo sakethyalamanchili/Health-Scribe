@@ -20,7 +20,7 @@ class HealthActivityRecommendation(BaseModel):
     activity_id: str = Field(description="Unique identifier for this activity")
     recommendation_short_str: str = Field(
         description="Brief activity description (max 100 chars)",
-        max_length=100
+        max_length=150
     )
     recommendation_long_str: str = Field(
         description="Detailed activity description"
