@@ -484,3 +484,59 @@ Your final output MUST be a single, valid JSON object matching the 'HealthActivi
             )
             
             return response
+        
+        
+    # ========== AGENT 7: WHAT-IF ANALYST AGENT ==========
+    
+    def run_what_if_analysis_agent(
+        self,
+        patient_summary: str,
+        health_report_json: str,
+        selected_activity_name: str,
+        current_score: float,
+        new_score: float
+    ) -> str:
+        """
+        A specialized agent that analyzes a "What-If" scenario and provides
+        a personalized explanation for the medical and score-based reasons.
+        """
+        
+        system_prompt = """You are 'Asha,' an expert AI health analyst. 
+A user is running a 'what-if' simulation to see what happens if they complete a specific task.
+
+Your job is to provide a concise, personalized analysis explaining WHY this activity is important.
+
+You MUST provide two explanations in your answer:
+1.  **The Medical Reason:** Look at the user's `Patient Summary` and the `selected_activity`. Explain *why* this specific activity is medically important for *this specific patient* and their chronic conditions.
+2.  **The Score Reason:** Look at the `current_score` and `new_score`. Explain *how* completing this "Recommended" task moves it to the "Completed" category and why that boosts their score.
+
+Be empathetic and analytical. Start with the medical reason first.
+"""
+        
+        user_prompt = f"""Here is the simulation context:
+
+**Patient Summary:**
+{patient_summary}
+
+**Full Health Report (JSON):**
+{health_report_json}
+
+**Selected Activity to Simulate:**
+{selected_activity_name}
+
+**Score Change:**
+- Current Score: {current_score:.1f}
+- Simulated New Score: {new_score:.1f}
+
+---
+Please provide your analysis, starting with the medical reason for this activity's importance.
+"""
+        
+        # Call the LLM for a simple text response
+        response = self._call_llm(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_format=None  # We want a simple string
+        )
+        
+        return response

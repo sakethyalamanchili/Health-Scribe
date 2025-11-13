@@ -7,6 +7,7 @@ from pathlib import Path
 import json
 from datetime import datetime
 import os
+import utils
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
@@ -132,7 +133,7 @@ streamlit run streamlit_app.py
         st.info(f"⚡ Agents: 5 Active + 1 Chatbot")
     
     # Main content
-    tab1, tab2, tab3 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works", "🔮 What-If Analysis"])
     
     with tab1:
         st.header("Upload Health Records")
@@ -259,7 +260,123 @@ streamlit run streamlit_app.py
         
         Traditional rule-based systems cannot handle these nuanced requirements.
         """)
+    
+    with tab4:
+        st.header("🔮 What-If Analysis")
+        st.markdown("See how your Health Engagement Score changes by completing recommended tasks.")
 
+        # This feature only works *after* a report is generated
+        if not st.session_state.health_report:
+            st.info("Please run an analysis on the 'Process Health Record' or 'View Demo' tab first to use this feature.")
+            st.stop()
+        
+        # If we're here, the report exists.
+        result = st.session_state.health_report
+        
+        # Get *only* the recommended activities
+        recommended_activities = [
+            a for a in result.activity_assessments 
+            if a.status == HealthActivityStatus.RECOMMENDED
+        ]
+        
+        if not recommended_activities:
+            st.success("Congratulations! You have no recommended activities left to complete.")
+            st.stop()
+
+        # Create a list of names for the selectbox
+        activity_names = [a.recommendation_short_str for a in recommended_activities]
+        
+        selected_name = st.selectbox("Select a recommended activity to simulate:", activity_names)
+        
+        if st.button("Simulate Completion", use_container_width=True):
+            # 1. GET CURRENT DATA
+            current_completed = result.completed_count
+            current_total = result.total_activities
+            current_needs_confirm = result.needs_confirmation_count
+            current_score = result.health_engagement_score
+
+            # 2. CALCULATE NEW SCORE (LOCAL MATH)
+            new_completed_count = current_completed + 1
+            new_score = utils.calculate_health_engagement_score(
+                completed=new_completed_count,
+                total=current_total,
+                needs_confirmation=current_needs_confirm 
+            )
+            
+            # 3. DISPLAY THE METRICS
+            st.markdown("### 📈 Simulated Score")
+            col1, col2 = st.columns(2)
+            score_delta = new_score - current_score
+            
+            with col1:
+                st.metric(
+                    label="Current Score",
+                    value=f"{current_score:.0f}/100"
+                )
+            with col2:
+                st.metric(
+                    label=f"New Score (after completing '{selected_name}')",
+                    value=f"{new_score:.0f}/100",
+                    delta=f"{score_delta:+.0f} points"
+                )
+            
+            # --- 4. THIS IS THE NEW "WHY" SECTION ---
+            st.markdown("---")
+            st.markdown("#### 💡 Asha's Analysis")
+            
+            # We need the full report and summary to give the agent context
+            report_json = result.model_dump_json()
+            patient_summary = result.patient_summary
+            
+            with st.spinner("Asha is analyzing the 'why'..."):
+                # Call your new What-If Analyst Agent
+                analysis_text = st.session_state.orchestrator.agent_system.run_what_if_analysis_agent(
+                    patient_summary=patient_summary,
+                    health_report_json=report_json,
+                    selected_activity_name=selected_name,
+                    current_score=current_score,
+                    new_score=new_score
+                )
+                # Display the AI's personalized text response
+                st.info(analysis_text) 
+
+            # --- 5. THIS IS THE "SHOW MATH" SECTION ---
+            with st.expander("Show Detailed Score Calculation..."):
+                st.markdown("#### How Your Score is Calculated")
+                st.markdown(
+                    "Your score is based on a formula that gives **full credit (100%)** "
+                    "for 'Completed' tasks and **partial credit (50%)** for tasks that "
+                    "'Need Confirmation'."
+                )
+                st.code(
+                    "Completed_Score = (Completed_Tasks / Total_Tasks) * 100\n"
+                    "Confirmation_Score = (Needs_Confirmation_Tasks / Total_Tasks) * 50\n"
+                    "Final_Score = Completed_Score + Confirmation_Score",
+                    language="python"
+                )
+                
+                st.markdown("---")
+                
+                st.markdown("##### 1. Your Current Score Calculation")
+                current_base_score = (current_completed / current_total) * 100
+                current_partial_score = (current_needs_confirm / current_total) * 50
+                st.markdown(
+                    f"* **Completed Score:** (`{current_completed}` / `{current_total}`) * 100 = **`{current_base_score:.1f}`** points\n"
+                    f"* **Confirmation Score:** (`{current_needs_confirm}` / `{current_total}`) * 50 = **`{current_partial_score:.1f}`** points\n"
+                    f"* **Final Score:** `{current_base_score:.1f}` + `{current_partial_score:.1f}` = **`{current_score:.1f}`**"
+                )
+                
+                st.markdown("---")
+
+                st.markdown("##### 2. Your Simulated Score Calculation")
+                new_base_score = (new_completed_count / current_total) * 100
+                new_partial_score = (current_needs_confirm / current_total) * 50
+                st.markdown(
+                    f"* **Completed Score:** (`{new_completed_count}` / `{current_total}`) * 100 = **`{new_base_score:.1f}`** points\n"
+                    f"* **Confirmation Score:** (`{current_needs_confirm}` / `{current_total}`) * 50 = **`{new_partial_score:.1f}`** points\n"
+                    f"* **Final Score:** `{new_base_score:.1f}` + `{new_partial_score:.1f}` = **`{new_score:.1f}`**"
+                )
+    
     # ===============================================
     # == 4. REPORT DISPLAY & CHATBOT (NEW!) ==
     # ===============================================
