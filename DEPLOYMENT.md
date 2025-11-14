@@ -1,112 +1,194 @@
+````markdown
 # Deployment Guide for CareGuide
 
-## Deploying to Streamlit Cloud
+This guide explains how to deploy **CareGuide** to **Streamlit Cloud** for your hackathon demo.
 
-Streamlit Cloud is the easiest way to deploy your CareGuide application for the hackathon.
+---
 
-### Prerequisites
+## 🚀 Deploying to Streamlit Cloud
 
-1. GitHub account
-2. Streamlit Cloud account (free at https://streamlit.io/cloud)
-3. OpenAI API key
+Streamlit Cloud is the easiest and fastest way to deploy CareGuide without managing servers.
 
-### Step 1: Push to GitHub
+---
 
-\`\`\`bash
+## ✅ Prerequisites
+
+Make sure you have:
+
+1. A **GitHub** account  
+2. A **Streamlit Cloud** account  
+   → https://streamlit.io/cloud  
+3. A **Google Gemini API Key**
+
+---
+
+## 📤 Step 1: Push Code to GitHub
+
+```bash
 # Initialize git repository
 git init
 git add .
 git commit -m "Initial commit - CareGuide"
 
-# Create repository on GitHub and push
+# Add GitHub repo and push
 git remote add origin https://github.com/yourusername/CareGuide.git
 git branch -M main
 git push -u origin main
-\`\`\`
+````
 
-### Step 2: Deploy on Streamlit Cloud
+Make sure your repo includes:
 
-1. Go to https://share.streamlit.io/
-2. Click "New app"
-3. Select your GitHub repository
-4. Set main file path: `streamlit_app.py`
-5. Click "Advanced settings"
+* `streamlit_app.py`
+* `requirements.txt`
+* `.env.example`
+* `data/uspstf_guidelines.json`
+* All agent, model, and orchestrator files
+
+---
+
+## 🌐 Step 2: Deploy on Streamlit Cloud
+
+1. Go to [https://share.streamlit.io](https://share.streamlit.io)
+2. Click **“New app”**
+3. Select your **CareGuide GitHub repository**
+4. Set **Main file path** →
+
+   ```
+   streamlit_app.py
+   ```
+5. Open **Advanced settings**
 6. Add your secrets:
 
-\`\`\`toml
-OPENAI_API_KEY = "sk-your-openai-api-key-here"
-TAVILY_API_KEY = "tvly-your-tavily-key-here"  # Optional
-\`\`\`
+```toml
+GOOGLE_API_KEY = "YOUR-ACTUAL-GEMINI-KEY-HERE"
+```
 
-7. Click "Deploy"
+7. Click **Deploy**
 
-### Step 3: Wait for Deployment
+---
+
+## ⏳ Step 3: Wait for Deployment
 
 Streamlit Cloud will automatically:
-- Install dependencies from requirements.txt
-- Build your application
-- Provide a public URL
 
-### Alternative: Local Deployment
+* Install dependencies from `requirements.txt`
+* Build your CareGuide application
+* Host it on a **public URL**
+* Restart automatically when you push updates
 
-To run locally for testing:
+---
 
-\`\`\`bash
+## 💻 Alternative: Run Locally
+
+If you want to test before deploying:
+
+```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
+# Copy env template
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your real API key
 
-# Run the app
+# Run Streamlit
 streamlit run streamlit_app.py
-\`\`\`
+```
 
-The app will open at http://localhost:8501
+Your app opens at:
 
-## Environment Variables
+```
+http://localhost:8501
+```
+
+---
+
+## 🔐 Environment Variables
 
 Required:
-- `OPENAI_API_KEY` - Your OpenAI API key
 
-Optional:
-- `TAVILY_API_KEY` - For enhanced web search (free tier available)
+* `GOOGLE_API_KEY` — Your Gemini API key
 
-## Troubleshooting
+**Note:** Use Streamlit Cloud **Secrets Manager** (never push `.env` to GitHub).
 
-### Issue: "Module not found" error
-**Solution:** Ensure all dependencies are in requirements.txt
+---
 
-### Issue: "API key not found"
-**Solution:** Check that secrets are correctly configured in Streamlit Cloud settings
+## 🐛 Troubleshooting
 
-### Issue: Slow performance
-**Solution:** 
-- Use `gpt-4o-mini` model (default) for faster responses
-- Reduce number of recommendations being processed
-- Consider caching with `@st.cache_data`
+### ❗ Issue: "Module not found"
 
-### Issue: Memory limits on Streamlit Cloud
-**Solution:** Streamlit Cloud free tier has memory limits. Optimize by:
-- Processing fewer activities at once
-- Reducing context window size
-- Using streaming responses
+**Solution:**
+Ensure all dependencies are listed in `requirements.txt`.
 
-## Production Considerations
+---
 
-For production deployment beyond the hackathon:
+### ❗ Issue: "API key not found"
 
-1. **Use FastAPI Backend**: Separate frontend and backend as described in the technical report
-2. **Add Database**: Store assessments in PostgreSQL or MongoDB
-3. **Add Authentication**: Implement user accounts and auth
-4. **HIPAA Compliance**: Use BAA-compliant hosting and APIs
-5. **Add Monitoring**: Use logging and error tracking
-6. **Scale Computing**: Use cloud functions or container orchestration
+**Solution:**
+Verify that `GOOGLE_API_KEY` is correctly added in:
 
-## Support
+**Streamlit Cloud → App Settings → Secrets**
 
-For hackathon support, refer to:
-- README.md for project overview
-- Technical report (will.ts) for architecture details
-- GitHub Issues for bug reports
+---
+
+### ❗ Issue: Slow performance
+
+**Solutions:**
+
+* Use `gemini-flash-latest` (fastest + cheapest)
+* Add caching:
+
+```python
+@st.cache_data
+def load_data():
+    ...
+```
+
+---
+
+### ❗ Issue: Memory limits on Streamlit Cloud
+
+Streamlit free tier has modest RAM.
+
+**Optimizations:**
+
+* Process fewer activities at once
+* Reduce prompt size before sending to the API
+* Avoid large file uploads
+
+---
+
+## 🏭 Production-Level Considerations
+
+For post-hackathon real-world deployment:
+
+1. **Add a FastAPI backend**
+   Separate UI (Streamlit) from agent pipeline.
+
+2. **Use a Database**
+   Store patient histories, generated scores, and logs.
+
+3. **Add Authentication**
+   OAuth, Firebase Auth, or Auth0.
+
+4. **HIPAA-Compliant Hosting**
+   Use cloud providers offering BAAs.
+
+5. **Monitoring & Error Tracking**
+   Add structured logs and Sentry-style reporting.
+
+---
+
+## 🔧 Support
+
+Helpful project files:
+
+* **README.md** — Full documentation
+* **HACKATHON_PITCH.md** — Your demo script
+* **DEPLOYMENT.md** — This file
+* **GitHub Issues** — Report problems
+
+---
+
+Deployment is now complete — you're ready to demo **CareGuide**! 🚀
+
+```
