@@ -1,4 +1,4 @@
-# Quick Start Guide - Project Asha
+# Quick Start Guide - CareGuide
 
 Get up and running in 5 minutes!
 

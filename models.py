@@ -1,5 +1,5 @@
 """
-Pydantic Models for Project Asha - Health Engagement System
+Pydantic Models for CareGuide - Health Engagement System
 These models ensure structured, validated outputs from all AI agents
 """
 

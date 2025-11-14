@@ -1,4 +1,4 @@
-# Project Asha - Hackathon Pitch Guide
+# CareGuide - Hackathon Pitch Guide
 
 ## The 3-Minute Winning Pitch
 
@@ -6,7 +6,7 @@
 
 "42% of Americans manage multiple chronic conditions, driving $4.9 trillion in annual healthcare costs. The core problem? Their health data is scattered across incompatible systems, forcing patients to become human data integrators—leading to medical errors and delayed care.
 
-**Project Asha** solves this with an intelligent AI companion that transforms fragmented health records into actionable care plans."
+**CareGuide** solves this with an intelligent AI companion that transforms fragmented health records into actionable care plans."
 
 ### Pillar 1: Reliability (60 seconds)
 
@@ -53,7 +53,7 @@ This fuzzy reasoning produces the **Health Engagement Score**—a gamified metri
 
 ### Closing (30 seconds)
 
-"Project Asha demonstrates production-ready agentic AI:
+"CareGuide demonstrates production-ready agentic AI:
 - Reliable: Deterministic pipeline with validation
 - Trustworthy: HIPAA-compliant with evidence-based medicine
 - Intelligent: Solves tasks impossible for traditional code
@@ -96,7 +96,7 @@ We're not just building for a hackathon. We're building the future of patient en
 
 ### "How is this different from existing health apps?"
 
-"Existing apps are data *viewers*. Asha is an intelligent *agent*. It doesn't just show you data—it reads, reasons, and recommends. The assessment agent performs cognitive work that would take a human hours: reading a complete medical history to find evidence of specific activities. This is true agentic AI, not just a fancy UI over a database."
+"Existing apps are data *viewers*. CareGuide is an intelligent *agent*. It doesn't just show you data—it reads, reasons, and recommends. The assessment agent performs cognitive work that would take a human hours: reading a complete medical history to find evidence of specific activities. This is true agentic AI, not just a fancy UI over a database."
 
 ### "What about hallucination risks?"
 
@@ -145,7 +145,7 @@ Emphasize these points throughout:
 Bring these visuals if possible:
 
 1. Architecture diagram showing the agent pipeline
-2. Side-by-side comparison: Traditional vs. Asha approach
+2. Side-by-side comparison: Traditional vs. CareGuide approach
 3. Cost impact infographic ($4.9T healthcare spending)
 4. Sample output showing the Health Engagement Score
 

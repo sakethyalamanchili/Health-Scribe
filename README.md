@@ -1,18 +1,18 @@
-# Project Asha - AI Health Engagement System
+# CareGuide - AI Health Engagement System
 
 ## 🏆 Agentic AI Hackathon Submission
 
-**Project Asha** is an intelligent health engagement system that transforms fragmented patient health records into actionable, personalized care plans. Built with a deterministic multi-agent architecture, it demonstrates production-ready AI that is reliable, compliant, and trustworthy.
+**CareGuide** is an intelligent health engagement system that transforms fragmented patient health records into actionable, personalized care plans. Built with a deterministic multi-agent architecture, it demonstrates production-ready AI that is reliable, compliant, and trustworthy.
 
 ## 🎯 The Problem We Solve
 
 **The $4.9 Trillion Crisis:** 42% of U.S. adults manage multiple chronic conditions, with health data scattered across incompatible systems. Patients become human data integrators, leading to medical errors and delayed care.
 
-**Our Solution:** Asha automates patient data integration, analyzes complete health histories, and generates a "Health Engagement Score" - a gamified metric showing exactly what health actions to take next.
+**Our Solution:** CareGuide automates patient data integration, analyzes complete health histories, and generates a "Health Engagement Score" - a gamified metric showing exactly what health actions to take next.
 
 ## 🏗️ Architecture: The "AI Assembly Line"
 
-Unlike unpredictable single-agent systems, Asha uses a **Deterministic Multi-Agent Pipeline** with specialized agents:
+Unlike unpredictable single-agent systems, CareGuide uses a **Deterministic Multi-Agent Pipeline** with specialized agents:
 
 1. **De-identification Agent** - HIPAA-compliant PHI removal
 2. **Summarization Agents** - Basic & advanced patient summaries
@@ -93,7 +93,7 @@ Or use the convenience scripts:
 ## 📁 Project Structure
 
 \`\`\`
-project-asha/
+CareGuide/
 ├── streamlit_app.py          # Main Streamlit UI
 ├── orchestrator.py           # Pipeline coordinator
 ├── agents.py                 # All AI agent implementations

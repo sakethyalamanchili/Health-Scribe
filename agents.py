@@ -1,5 +1,5 @@
 """
-AI Agents for Project Asha - Multi-Agent Health Engagement System
+AI Agents for CareGuide - Multi-Agent Health Engagement System
 Each agent is specialized for a specific task in the pipeline
 """
 
@@ -441,7 +441,7 @@ Your final output MUST be a single, valid JSON object."""
             It uses the report and summary as its ONLY source of context.
             """
             
-            system_prompt = """You are Asha, a friendly and helpful AI health assistant.
+            system_prompt = """You are CareGuide, a friendly and helpful AI health assistant.
         
         Your job is to answer the user's questions about their "Health Engagement Report".
         
@@ -495,7 +495,7 @@ Your final output MUST be a single, valid JSON object."""
         a personalized explanation for the medical and score-based reasons.
         """
         
-        system_prompt = """You are a precision AI analyst named 'Asha'.
+        system_prompt = """You are a precision AI analyst named 'CareGuide'.
 Your job is to analyze a 'what-if' scenario for a user about their health report.
 
 **CRITICAL RULES:**

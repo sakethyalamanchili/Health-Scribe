@@ -1,5 +1,5 @@
 """
-Streamlit Frontend for Project Asha - Health Engagement System
+Streamlit Frontend for CareGuide - Health Engagement System
 """
 
 import streamlit as st
@@ -62,7 +62,7 @@ streamlit run streamlit_app.py
     
     # Page configuration
     st.set_page_config(
-        page_title="Project Asha - Health Engagement",
+        page_title="CareGuide - Health Engagement",
         page_icon="🏥",
         layout="wide",
         initial_sidebar_state="expanded"
@@ -112,14 +112,30 @@ streamlit run streamlit_app.py
     """, unsafe_allow_html=True)
     
     # Header
-    st.markdown('<h1 class="main-header">🏥 Project Asha</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🏥 CareGuide</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Intelligent Health Engagement System powered by Multi-Agent AI</p>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.header("About Project Asha")
+        st.header("About CareGuide")
+        
+        st.warning(
+            """
+            **Disclaimer: Human-in-Charge**
+            
+            This project's output is **not a diagnosis**; it is an **audit**.
+            
+            It's a smart assistant that helps you find what's in your own files and
+            compares it to a checklist. The documents you upload are the "ground truth,"
+            and this output is the AI's analysis of that truth.
+            
+            **Always consult a human medical professional for medical advice.**
+            """
+        )
+        
         st.markdown("""
-        **Asha** means "hope" in Sanskrit.
+        "This system uses a team of specialized AI agents to unify and "
+        "audit your health records, creating a single, prioritized checklist."
         
         This system uses a team of specialized AI agents to:
         - Unify multiple, fragmented health records (.txt files)
@@ -148,7 +164,7 @@ streamlit run streamlit_app.py
     
     with tab1:
         st.header("Upload Health Records")
-        st.markdown("Upload all of your .txt health records from different doctors. Asha will unify them.")
+        st.markdown("Upload all of your .txt health records from different doctors. CareGuide will unify them.")
         
         col1, col2 = st.columns([2, 1])
         
@@ -190,7 +206,7 @@ streamlit run streamlit_app.py
     
     with tab2:
         st.header("Demo Analysis")
-        st.markdown("See how Project Asha processes a sample patient record through our multi-agent pipeline.")
+        st.markdown("See how CareGuide processes a sample patient record through our multi-agent pipeline.")
         
         demo_file_path = Path("data/demo_patient_record.txt")
         
@@ -212,7 +228,7 @@ streamlit run streamlit_app.py
         st.markdown("""
         ### Multi-Agent Architecture
         
-        Project Asha uses a deterministic pipeline of specialized AI agents:
+        Project CareGuide uses a deterministic pipeline of specialized AI agents:
         """)
         
         agents = [
@@ -345,12 +361,12 @@ streamlit run streamlit_app.py
             
             # 5. CALL THE "WHY" AGENT (AGENT 7)
             st.markdown("---")
-            st.markdown("#### 💡 Asha's Analysis")
+            st.markdown("#### 💡 CareGuide's Analysis")
             
             report_json = result.model_dump_json()
             patient_summary = result.patient_summary
             
-            with st.spinner("Asha is analyzing the 'why'..."):
+            with st.spinner("CareGuide is analyzing the 'why'..."):
                 # Call your new What-If Analyst Agent
                 analysis_text = st.session_state.orchestrator.agent_system.run_what_if_analysis_agent(
                     patient_summary=patient_summary,
@@ -513,7 +529,7 @@ streamlit run streamlit_app.py
 
         # --- CHATBOT UI ---
         st.divider()
-        st.markdown("## 💬 Ask Asha About Your Report")
+        st.markdown("## 💬 Ask CareGuide About Your Report")
 
         # 1. Display ALL messages from session state
         for message in st.session_state.messages:
@@ -527,7 +543,7 @@ streamlit run streamlit_app.py
             st.session_state.messages.append({"role": "user", "content": prompt})
             
             # 4. Call the AI agent to get a response
-            with st.spinner("Asha is thinking..."):
+            with st.spinner("CareGuide is thinking..."):
                 response = st.session_state.orchestrator.agent_system.run_chat_agent(
                     user_question=prompt,
                     patient_summary=result.patient_summary,

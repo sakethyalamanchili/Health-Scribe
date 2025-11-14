@@ -1,5 +1,5 @@
 """
-Test script to verify the Project Asha system works end-to-end
+Test script to verify the CareGuide system works end-to-end
 Run this before deploying to catch any issues
 """
 
@@ -106,7 +106,7 @@ def main():
     """Run all tests"""
     print("\n")
     print("╔" + "=" * 58 + "╗")
-    print("║" + " " * 10 + "PROJECT ASHA - SYSTEM TEST" + " " * 22 + "║")
+    print("║" + " " * 10 + "CAREGUIDE - SYSTEM TEST" + " " * 22 + "║")
     print("╚" + "=" * 58 + "╝")
     print()
     

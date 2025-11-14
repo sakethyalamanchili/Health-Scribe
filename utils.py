@@ -1,5 +1,5 @@
 """
-Utility functions for Project Asha
+Utility functions for CareGuide
 """
 
 import re

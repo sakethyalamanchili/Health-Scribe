@@ -1,8 +1,8 @@
-# Deployment Guide for Project Asha
+# Deployment Guide for CareGuide
 
 ## Deploying to Streamlit Cloud
 
-Streamlit Cloud is the easiest way to deploy your Project Asha application for the hackathon.
+Streamlit Cloud is the easiest way to deploy your CareGuide application for the hackathon.
 
 ### Prerequisites
 
@@ -16,10 +16,10 @@ Streamlit Cloud is the easiest way to deploy your Project Asha application for t
 # Initialize git repository
 git init
 git add .
-git commit -m "Initial commit - Project Asha"
+git commit -m "Initial commit - CareGuide"
 
 # Create repository on GitHub and push
-git remote add origin https://github.com/yourusername/project-asha.git
+git remote add origin https://github.com/yourusername/CareGuide.git
 git branch -M main
 git push -u origin main
 \`\`\`

@@ -1,5 +1,5 @@
 """
-Configuration settings for Project Asha
+Configuration settings for CareGuide
 """
 
 import os
@@ -56,5 +56,5 @@ PHI_IDENTIFIERS = [
 ]
 
 # Streamlit configuration
-STREAMLIT_TITLE = "Project Asha - Your AI Health Companion"
+STREAMLIT_TITLE = "CareGuide - Your AI Health Companion"
 STREAMLIT_ICON = "🏥"

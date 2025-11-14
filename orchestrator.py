@@ -1,5 +1,5 @@
 """
-Main Orchestrator for Project Asha - The AI Assembly Line
+Main Orchestrator for CareGuide - The AI Assembly Line
 Coordinates the multi-agent pipeline in a deterministic sequence
 """
 
@@ -184,7 +184,7 @@ def main():
     Main entry point for command-line testing.
     """
     print("=" * 60)
-    print("PROJECT ASHA - Health Engagement Assessment System")
+    print("CareGuide - Health Engagement Assessment System")
     print("=" * 60)
     print()
     
