@@ -156,7 +156,7 @@ streamlit run streamlit_app.py
         st.subheader("System Status")
         st.success(f"✅ API: Connected")
         st.info(f"🤖 Model: {config.GEMINI_MODEL}")
-        st.info(f"⚡ Agents: 5 Active + 2 Chatbots")
+        st.info(f"⚡ Agents: 6 Active + 2 Chatbots")
     
     # Main content
     tab1, tab2, tab3, tab4 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works", "🔮 What-If Analysis"])
@@ -174,7 +174,6 @@ streamlit run streamlit_app.py
                 type=['txt'],
                 accept_multiple_files=True
             )
-            # ----------------------------------------
             
             if not uploaded_text_files:
                 st.info("💡 Don't have a file? Click 'View Demo' tab to see a sample analysis!")
@@ -238,25 +237,31 @@ streamlit run streamlit_app.py
                 "output": "PatientSummary model (age, sex, summaries)"
             },
             {
-                "name": "2. Recommendation Agents (RAG + Web)",
+                "name": "2. Trend Analyst Agent", # <-- NEW AGENT
+                "icon": "📈",
+                "description": "Scans the master record to find and analyze data points over time (e.g., HbA1c, Blood Pressure).",
+                "output": "A list of trend analyses (e.g., 'Improving', 'Worsening')"
+            },
+            {
+                "name": "3. Recommendation Agents (RAG + Web)", # <-- Renumbered
                 "icon": "🌐",
                 "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
                 "output": "Two lists of HealthActivityRecommendation"
             },
             {
-                "name": "3. Consolidation Agent",
+                "name": "4. Consolidation Agent", # <-- Renumbered
                 "icon": "🔄",
                 "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
                 "output": "A single, clean list of unique activities"
             },
             {
-                "name": "4. Self-Correcting Assessment Agent",
+                "name": "5. Self-Correcting Assessment Agent", # <-- Renumbered
                 "icon": "🧠",
                 "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, **prioritizes it (🔴/🟡/🟢)**, and corrects it if needed.",
                 "output": "Final assessment with status, confidence, and urgency"
             },
             {
-                "name": "5. Conversational & Analyst Agents",
+                "name": "6. Conversational & Analyst Agents", # <-- Renumbered
                 "icon": "💬",
                 "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
                 "output": "Natural language explanations"
@@ -445,6 +450,23 @@ streamlit run streamlit_app.py
             st.metric("Completion Rate", f"{completion_rate:.0f}%",
                         help="Percentage of activities marked as completed")
         
+        # --- TREND ANALYSIS SECTION ---
+        if result.disease_trends:
+            st.markdown("### 📈 Chronic Disease Trends")
+            
+            # Create columns based on the number of trends found
+            cols = st.columns(len(result.disease_trends))
+            
+            for i, trend in enumerate(result.disease_trends):
+                with cols[i]:
+                    st.metric(label=f"{trend.metric_name} Trend", value=trend.trend)
+                    st.caption(trend.analysis)
+                    # Show the data points in an expander
+                    with st.expander("Show Data Points"):
+                        for dp in trend.data_points:
+                            st.markdown(f"- `{dp}`")
+            st.divider()
+        
         # Activity breakdown
         st.markdown("### 📋 Activity Assessment Details")
         st.caption("Activities are automatically prioritized by urgency: 🔴 Urgent, 🟡 Soon, 🟢 Routine")
@@ -600,6 +622,9 @@ def process_health_record(text_files):
                 st.error(f"Error during processing: {str(e)}")
                 st.exception(e)
                 return
+        
+        # --- ADD THIS LINE TO FORCE THE PAGE TO REFRESH ---
+        st.rerun()
 
 
 def process_demo(demo_content: str):
@@ -631,6 +656,8 @@ def process_demo(demo_content: str):
         except Exception as e:
             st.error(f"Error during demo execution: {str(e)}")
             st.exception(e)
+
+    st.rerun()
 
 
 if __name__ == "__main__":

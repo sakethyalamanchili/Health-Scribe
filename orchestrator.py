@@ -81,6 +81,18 @@ class HealthAssessmentOrchestrator:
         print(f"  Basic: {patient_summary.basic_summary}")
         print(f"  Advanced: {patient_summary.advanced_summary}")
         
+        # ========== STEP 2.5: TREND ANALYSIS (NEW STEP) ==========
+        print("Step 2.5: Analyzing chronic disease trends...")
+        try:
+            disease_trends = self.agent_system.run_trend_analysis_agent(
+                patient_summary=patient_summary,
+                patient_data=patient_data  # Pass the full de-identified text
+            )
+            print(f"  Found {len(disease_trends)} trends to report.")
+        except Exception as e:
+            print(f"  Trend Analysis Agent failed: {e}")
+            disease_trends = [] # Continue without trends if it fails
+        
         # ========== STEP 3: MULTI-SOURCE RECOMMENDATIONS ==========
         print("Step 3: Gathering recommendations from multiple sources...")
         
@@ -172,6 +184,7 @@ class HealthAssessmentOrchestrator:
             recommended_count=recommended_count,
             needs_confirmation_count=needs_confirmation_count,
             health_engagement_score=health_score,
+            disease_trends=disease_trends,
             activity_assessments=activity_assessments
         )
         

@@ -82,6 +82,17 @@ class HealthActivityAssessmentOutput(BaseModel):
         description="Date of completion if found in record"
     )
 
+# --- MODEL FOR TREND ANALYSIS ---
+class ChronicDiseaseTrend(BaseModel):
+    """Analysis of a single chronic disease metric over time."""
+    metric_name: str = Field(description="The name of the metric being tracked (e.g., 'HbA1c', 'Blood Pressure', 'Weight (BMI)')")
+    trend: Literal["Improving", "Worsening", "Stable", "Not Enough Data"] = Field(description="The direction of the trend")
+    analysis: str = Field(description="The AI's one-sentence analysis of this trend.")
+    data_points: List[str] = Field(description="A list of the raw data points and dates found in the text (e.g., '7.8% on 10/15/2024')")
+    
+class ChronicDiseaseTrendList(BaseModel):
+    """A container for the list of chronic disease trends."""
+    trends: List[ChronicDiseaseTrend] = Field(description="A list of the chronic disease trend analyses.")
 
 class HealthAssessmentOutput(BaseModel):
     """Final output containing all assessed health activities"""
@@ -96,6 +107,10 @@ class HealthAssessmentOutput(BaseModel):
         description="Overall health engagement score (0-100)",
         ge=0,
         le=100
+    )
+    disease_trends: List[ChronicDiseaseTrend] = Field(
+        default=[],
+        description="List of chronic disease trend analyses"
     )
     activity_assessments: List[HealthActivityAssessmentOutput] = Field(
         description="List of all activity assessments"

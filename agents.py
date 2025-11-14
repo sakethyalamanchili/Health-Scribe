@@ -12,7 +12,9 @@ from models import (
     HealthActivityRecommendation,
     HealthActivityRecommendationList,
     HealthActivityAssessmentOutput,
-    HealthActivityStatus
+    HealthActivityStatus,
+    ChronicDiseaseTrend,
+    ChronicDiseaseTrendList
 )
 
 
@@ -52,12 +54,13 @@ class AshaAgentSystem:
                 "threshold": "BLOCK_NONE",
             },
         ]
-        # -----------------------------------------------
+        
+        self.safety_settings = safety_settings
         
         self.model = genai.GenerativeModel(
             model_name=self.model_name,
             generation_config=generation_config,
-            safety_settings=safety_settings  # <-- THIS LINE IS ADDED
+            safety_settings=self.safety_settings 
         )
     
     def _call_llm(
@@ -85,7 +88,12 @@ Please respond with valid JSON matching this schema:
 
 Return ONLY the JSON, no additional text."""
         
-        response = self.model.generate_content(full_prompt)
+        # --- THIS IS THE CORRECTED CALL ---
+        response = self.model.generate_content(
+            full_prompt,
+            safety_settings=self.safety_settings # Access the class var, not self.model
+        )
+        # ----------------------------------
         
         if response_format:
             # Parse JSON response into Pydantic model
@@ -99,22 +107,18 @@ Return ONLY the JSON, no additional text."""
                 
                 return response_format.model_validate_json(response_text)
             
-            # --- THIS IS THE NEW, SAFER EXCEPT BLOCK ---
             except Exception as e:
                 print(f"Error parsing structured response: {e}")
-                # This is safer - it prints the *reason* it failed
-                # instead of trying to access .text again.
-                print(f"Full response feedback: {response.prompt_feedback}")
+                print(f"Full response object on error: {str(response)}")
                 raise
-            # ---------------------------------------------
         else:
             # This is for the chatbot, which wants a plain string
             try:
                 return response.text
             except Exception as e:
                 print(f"Error getting text response (likely safety block): {e}")
-                print(f"Full response feedback: {response.prompt_feedback}")
-                return "I'm sorry, I encountered an error and cannot provide a response at this time."
+                print(f"Full response object on error: {str(response)}")
+                return "I'm sorry, I encountered an error and cannot provide a response at this time."    
     
     # ========== AGENT 1: PATIENT SUMMARIZATION ==========
     
@@ -153,6 +157,64 @@ If the record is incomplete, make reasonable inferences from available data."""
         )
         
         return response
+    
+    # --- NEW TREND ANALYSIS AGENT ---
+    # ========== AGENT 1.5: TREND ANALYST ==========
+
+    def run_trend_analysis_agent(
+        self, 
+        patient_summary: PatientSummary, 
+        patient_data: str
+    ) -> List[ChronicDiseaseTrend]:
+        """
+        Analyzes the complete patient record for longitudinal trends
+        in key chronic disease metrics.
+        """
+
+        # Find out which chronic diseases to even look for
+        conditions = patient_summary.advanced_summary.lower()
+        metrics_to_track = []
+        if "diabetes" in conditions or "prediabetes" in conditions:
+            metrics_to_track.append("HbA1c")
+        if "hypertension" in conditions:
+            metrics_to_track.append("Blood Pressure (BP)")
+        if "obesity" in conditions:
+            metrics_to_track.append("Weight (BMI)")
+
+        if not metrics_to_track:
+            print("  No trackable chronic diseases found for trend analysis.")
+            return []
+
+        system_prompt = f"""You are a clinical data analyst. Your job is to perform a longitudinal trend analysis for a patient's chronic conditions.
+You must scan the *entire* patient record to find all data points for the following metrics: {', '.join(metrics_to_track)}.
+
+For each metric, you will:
+1.  **Find Data Points:** Extract all available timestamped data (e.g., "7.8% on 10/15/2024", "7.9% on 07/12/2024").
+2.  **Determine Trend:** Analyze the data points chronologically and set the 'trend' to "Improving", "Worsening", "Stable", or "Not Enough Data".
+3.  **Write Analysis:** Provide a concise, one-sentence analysis explaining the trend. (e.g., "The patient's HbA1c is improving slightly but remains above the target goal.").
+
+You must return a JSON list, one entry for each metric.
+"""
+
+        user_prompt = f"""**Patient Summary:**
+{patient_summary.advanced_summary}
+
+**Full Patient Record:**
+{patient_data}
+
+---
+Please generate the trend analysis for the metrics: {', '.join(metrics_to_track)}
+"""
+
+        # Ask for the new container model
+        response_model = self._call_llm(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_format=ChronicDiseaseTrendList  # <-- Use the new container
+        )
+        
+        # Return the list *inside* the container
+        return response_model.trends
     
     # ========== AGENT 2: WEB-BASED RECOMMENDATIONS ==========
     
@@ -368,9 +430,9 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
             draft_assessment = HealthActivityAssessmentOutput(
                 activity_id=activity.activity_id,
                 recommendation_short_str=activity.recommendation_short_str,
-                status=HealthActivityStatus.RECOMMENDED,
-                urgency="Medium",
-                supporting_evidence="Error during initial AI assessment.",
+                status=HealthActivityStatus.RECOMMENDED, # <-- CORRECTED
+                urgency="Medium", # <-- Set a default urgency
+                supporting_evidence="Error during initial AI assessment. Defaulting to 'Recommended'.",
                 user_input_questions=[]
             )
 
