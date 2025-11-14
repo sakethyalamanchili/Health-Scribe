@@ -93,6 +93,18 @@ class HealthAssessmentOrchestrator:
             print(f"  Trend Analysis Agent failed: {e}")
             disease_trends = [] # Continue without trends if it fails
         
+        # ========== STEP 2.6: MEDICATION ANALYSIS (NEW STEP) ==========
+        print("Step 2.6: Analyzing medication list...")
+        try:
+            medication_analysis_list = self.agent_system.run_medication_analysis_agent(
+                patient_summary=patient_summary,
+                patient_data=patient_data
+            )
+            print(f"  Found {len(medication_analysis_list)} potential medication issues.")
+        except Exception as e:
+            print(f"  Medication Analysis Agent failed: {e}")
+            medication_analysis_list = []
+        
         # ========== STEP 3: MULTI-SOURCE RECOMMENDATIONS ==========
         print("Step 3: Gathering recommendations from multiple sources...")
         
@@ -185,6 +197,7 @@ class HealthAssessmentOrchestrator:
             needs_confirmation_count=needs_confirmation_count,
             health_engagement_score=health_score,
             disease_trends=disease_trends,
+            medication_analysis_list=medication_analysis_list,
             activity_assessments=activity_assessments
         )
         

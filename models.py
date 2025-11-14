@@ -94,6 +94,21 @@ class ChronicDiseaseTrendList(BaseModel):
     """A container for the list of chronic disease trends."""
     trends: List[ChronicDiseaseTrend] = Field(description="A list of the chronic disease trend analyses.")
 
+class MedicationAnalysis(BaseModel):
+    """Analysis of a single medication or interaction."""
+    medication_name: str = Field(description="The primary medication being analyzed (e.g., 'Lisinopril')")
+    analysis_type: Literal["Interaction", "Condition Conflict", "Outdated"] = Field(description="The *type* of issue found.")
+    urgency: Literal["High", "Medium", "Low"] = Field(description="The urgency of discussing this with a doctor.")
+    explanation: str = Field(description="The AI's explanation of the potential issue for the user to discuss with their doctor.")
+
+    supporting_evidence: str = Field(
+        description="The exact data from the context (med list or summary) that justifies this analysis."
+    )
+
+class MedicationAnalysisList(BaseModel):
+    """A container for the list of medication analyses."""
+    analyses: List[MedicationAnalysis] = Field(description="A list of the AI-flagged medication issues.")
+
 class HealthAssessmentOutput(BaseModel):
     """Final output containing all assessed health activities"""
     patient_summary: str = Field(description="Brief patient demographic summary")
@@ -112,10 +127,13 @@ class HealthAssessmentOutput(BaseModel):
         default=[],
         description="List of chronic disease trend analyses"
     )
+    medication_analysis_list: List[MedicationAnalysis] = Field(
+        default=[],
+        description="List of AI-flagged medication issues for review."
+    )
     activity_assessments: List[HealthActivityAssessmentOutput] = Field(
         description="List of all activity assessments"
     )
-
 
 class PatientSummary(BaseModel):
     """Patient demographic and medical summary"""
@@ -123,7 +141,11 @@ class PatientSummary(BaseModel):
     sex: Optional[str] = Field(default=None, description="Patient sex")
     basic_summary: str = Field(description="Brief demographic summary")
     advanced_summary: str = Field(description="Detailed medical summary including conditions")
-
+    
+    current_medications: List[str] = Field(
+        default=[],
+        description="A list of the patient's current medications (e.g., ['Lisinopril 20mg', 'Metformin 1000mg'])"
+    )
 
 class USPSTFRecommendation(BaseModel):
     """USPSTF guideline recommendation"""
@@ -132,3 +154,4 @@ class USPSTFRecommendation(BaseModel):
     population: str
     grade: Literal["A", "B"]
     category: str
+    

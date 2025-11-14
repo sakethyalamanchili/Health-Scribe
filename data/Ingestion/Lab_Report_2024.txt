@@ -1,0 +1,25 @@
+Quest Diagnostics - Patient Report
+
+Name: Jane Doe
+DOB: May 20, 1955
+MRN: 98765-A
+DATE COLLECTED: 09/15/2024
+
+--- METABOLIC PANEL (FASTING) ---
+GLUCOSE: 122 mg/dL (High)
+HbA1c: 7.2% (High)
+eGFR: 58 mL/min/1.73m2 (Low)
+TSH: 4.8 mIU/L (High-Normal)
+
+--- LIPID PANEL (FASTING) ---
+TOTAL CHOLESTEROL: 215 mg/dL (High)
+LDL CHOLESTEROL: 130 mg/dL (High)
+HDL CHOLESTEROL: 45 mg/dL
+
+--- NOTES ---
+
+HbA1c of 7.2% and Fasting Glucose of 122 suggest Type 2 Diabetes.
+
+eGFR of 58 indicates mild Chronic Kidney Disease (CKD Stage 3a).
+
+Lipid panel is elevated.

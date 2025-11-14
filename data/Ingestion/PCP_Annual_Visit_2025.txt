@@ -1,0 +1,63 @@
+PATIENT RECORD - PRIMARY CARE
+
+PATIENT: Jane R. Doe
+DOB: 05/20/1955 (Age 70)
+MRN: 98765-A
+PHONE: (561) 555-1212
+ADDRESS: 1234 Elder Way, Boca Raton, FL 33431
+
+DATE OF VISIT: 10/10/2025
+PROVIDER: Dr. Sarah Chen, MD
+
+SUBJECTIVE:
+Jane Doe is a 70-year-old female here for her annual wellness exam. She states she feels "generally good" but has persistent knee pain from her osteoarthritis. She is managing her known hypertension and GERD.
+
+CONDITIONS:
+
+Essential Hypertension (long-standing)
+
+Osteoarthritis (knees)
+
+GERD (Gastroesophageal Reflux Disease)
+
+CURRENT MEDICATIONS (as per patient report):
+
+Lisinopril 20mg daily
+
+Omeprazole 40mg daily
+
+Tylenol (Acetaminophen) 500mg as needed for pain
+
+Aspirin 81mg (patient takes this over-the-counter)
+
+VITALS:
+
+BP: 142/88 mmHg (Elevated)
+
+Heart Rate: 74 bpm
+
+Weight: 155 lbs
+
+BMI: 25.1 (Overweight)
+
+VISIT NOTES:
+
+Administered seasonal influenza vaccine.
+
+Patient's blood pressure remains elevated despite Lisinopril. Will refer to Dr. Patel (Cardiology) for evaluation and management.
+
+Discussed need for bone density screening (DEXA scan) given her age. Patient will schedule.
+
+Patient has not had a colonoscopy in over 10 years. Last one was ~2013.
+
+Patient reports she had a "Shingles shot" but cannot remember when.
+
+PLAN:
+
+Refer to Cardiology (Dr. Patel) for BP management.
+
+Order DEXA scan for osteoporosis screening.
+
+Order screening colonoscopy.
+
+Patient to schedule.

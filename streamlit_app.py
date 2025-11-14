@@ -230,43 +230,49 @@ streamlit run streamlit_app.py
         """)
         
         agents = [
-            {
-                "name": "1. Unifier & Summarizer Agent",
-                "icon": "📝",
-                "description": "Combines all text files into a single 'master record', then creates a structured summary.",
-                "output": "PatientSummary model (age, sex, summaries)"
-            },
-            {
-                "name": "2. Trend Analyst Agent", # <-- NEW AGENT
-                "icon": "📈",
-                "description": "Scans the master record to find and analyze data points over time (e.g., HbA1c, Blood Pressure).",
-                "output": "A list of trend analyses (e.g., 'Improving', 'Worsening')"
-            },
-            {
-                "name": "3. Recommendation Agents (RAG + Web)", # <-- Renumbered
-                "icon": "🌐",
-                "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
-                "output": "Two lists of HealthActivityRecommendation"
-            },
-            {
-                "name": "4. Consolidation Agent", # <-- Renumbered
-                "icon": "🔄",
-                "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
-                "output": "A single, clean list of unique activities"
-            },
-            {
-                "name": "5. Self-Correcting Assessment Agent", # <-- Renumbered
-                "icon": "🧠",
-                "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, **prioritizes it (🔴/🟡/🟢)**, and corrects it if needed.",
-                "output": "Final assessment with status, confidence, and urgency"
-            },
-            {
-                "name": "6. Conversational & Analyst Agents", # <-- Renumbered
-                "icon": "💬",
-                "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
-                "output": "Natural language explanations"
-            }
-        ]
+        {
+            "name": "1. Unifier & Summarizer Agent",
+            "icon": "📝",
+            "description": "Combines all text files, creates a structured summary, and extracts the patient's current medication list.",
+            "output": "PatientSummary model (age, sex, meds, etc.)"
+        },
+        {
+            "name": "2. Trend Analyst Agent",
+            "icon": "📈",
+            "description": "Scans the master record to find and analyze data points over time (e.g., HbA1c, Blood Pressure).",
+            "output": "A list of trend analyses (e.g., 'Improving', 'Worsening')"
+        },
+        {
+            "name": "3. Medication Auditor Agent", # <-- NEW AGENT
+            "icon": "💊",
+            "description": "An 'AI Pharmacist-Auditor' that checks the medication list for dangerous interactions or conflicts with the patient's conditions.",
+            "output": "A list of potential issues to discuss with a doctor."
+        },
+        {
+            "name": "4. Recommendation Agents (RAG + Web)", # <-- Renumbered
+            "icon": "🌐",
+            "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
+            "output": "Two lists of HealthActivityRecommendation"
+        },
+        {
+            "name": "5. Consolidation Agent", # <-- Renumbered
+            "icon": "🔄",
+            "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
+            "output": "A single, clean list of unique activities"
+        },
+        {
+            "name": "6. Self-Correcting Assessment Agent", # <-- Renumbered
+            "icon": "🧠",
+            "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, prioritizes it (🔴/🟡/🟢), and corrects it if needed.",
+            "output": "Final assessment with status, confidence, and urgency"
+        },
+        {
+            "name": "7. Conversational & Analyst Agents", # <-- Renumbered
+            "icon": "💬",
+            "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
+            "output": "Natural language explanations"
+        }
+    ]
         
         for agent in agents:
             with st.container():
@@ -465,6 +471,29 @@ streamlit run streamlit_app.py
                     with st.expander("Show Data Points"):
                         for dp in trend.data_points:
                             st.markdown(f"- `{dp}`")
+            st.divider()
+        
+        # --- THIS IS THE NEW MEDICATION AUDIT SECTION ---
+        if result.medication_analysis_list:
+            st.markdown("### 💊 Medication Audit")
+            st.caption("The AI auditor has flagged potential items to discuss with your doctor. **Do not stop or change any medication without medical advice.**")
+
+            # Sort by urgency
+            meds_sorted = sorted(result.medication_analysis_list, key=lambda x: (x.urgency == 'High', x.urgency == 'Medium'), reverse=True)
+
+            for med_issue in meds_sorted:
+                emoji = get_urgency_emoji(med_issue.urgency)
+                with st.expander(f"{emoji} **{med_issue.medication_name}** (Issue: {med_issue.analysis_type})"):
+                    col1, col2 = st.columns([2, 1])
+                    with col1:
+                        st.markdown(f"**Explanation:** {med_issue.explanation}")
+                    with col2:
+                        if med_issue.urgency == "High":
+                            st.error(f"**Urgency:** {med_issue.urgency}")
+                        elif med_issue.urgency == "Medium":
+                            st.warning(f"**Urgency:** {med_issue.urgency}")
+                        else:
+                            st.info(f"**Urgency:** {med_issue.urgency}")
             st.divider()
         
         # Activity breakdown

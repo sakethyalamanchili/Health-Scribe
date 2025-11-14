@@ -14,7 +14,9 @@ from models import (
     HealthActivityAssessmentOutput,
     HealthActivityStatus,
     ChronicDiseaseTrend,
-    ChronicDiseaseTrendList
+    ChronicDiseaseTrendList,
+    MedicationAnalysis,
+    MedicationAnalysisList
 )
 
 
@@ -32,7 +34,7 @@ class AshaAgentSystem:
             "temperature": self.temperature,
             "top_p": 0.95,
             "top_k": 40,
-            "max_output_tokens": 16384,
+            "max_output_tokens": 16384, # Increased token limit
         }
 
         # --- THIS IS THE NEW SAFETY SETTINGS BLOCK ---
@@ -54,13 +56,16 @@ class AshaAgentSystem:
                 "threshold": "BLOCK_NONE",
             },
         ]
-        
+        # -----------------------------------------------
+
+        # --- STORE THE SETTINGS ON THE CLASS INSTANCE ---
         self.safety_settings = safety_settings
+        # -----------------------------------------------
         
         self.model = genai.GenerativeModel(
             model_name=self.model_name,
             generation_config=generation_config,
-            safety_settings=self.safety_settings 
+            safety_settings=self.safety_settings  # Pass them here during init
         )
     
     def _call_llm(
@@ -89,9 +94,10 @@ Please respond with valid JSON matching this schema:
 Return ONLY the JSON, no additional text."""
         
         # --- THIS IS THE CORRECTED CALL ---
+        # It now passes the safety settings on every call
         response = self.model.generate_content(
             full_prompt,
-            safety_settings=self.safety_settings # Access the class var, not self.model
+            safety_settings=self.safety_settings 
         )
         # ----------------------------------
         
@@ -107,10 +113,12 @@ Return ONLY the JSON, no additional text."""
                 
                 return response_format.model_validate_json(response_text)
             
+            # --- THIS IS THE SAFER EXCEPT BLOCK ---
             except Exception as e:
                 print(f"Error parsing structured response: {e}")
                 print(f"Full response object on error: {str(response)}")
                 raise
+            # ------------------------------------
         else:
             # This is for the chatbot, which wants a plain string
             try:
@@ -124,7 +132,7 @@ Return ONLY the JSON, no additional text."""
     
     def create_patient_summary(self, patient_data: str) -> PatientSummary:
         """
-        Create basic and advanced patient summaries from health record.
+        Create basic and advanced patient summaries from health record AND extract a list of current medications.
         """
         system_prompt = """You are a medical data analyst specializing in patient record summarization.
 
@@ -135,6 +143,8 @@ Your task is to extract key information from a patient's health record and creat
 
 2. ADVANCED SUMMARY: Demographics + key medical conditions
    Example: "44-year-old male with obesity (BMI 32), prediabetes (HbA1c 6.2%), hypertension"
+   
+3. CURRRENT MEDICATIONS: A plain list of strings of the patient's current medications. (e.g., ["Lisinopril 20mg", "Metformin 1000mg"]).
 
 Extract:
 - Age (calculate from birth year if needed)
@@ -142,9 +152,9 @@ Extract:
 - Major chronic conditions (diabetes, hypertension, obesity, heart disease, etc.)
 - Risk factors (smoking, family history, etc.)
 
-Be concise and clinically relevant."""
+Be concise and clinically relevant. Only list medications found under a "Current Medications" or active "PLAN" section. """
 
-        user_prompt = f"""Analyze this patient health record and create both summaries:
+        user_prompt = f"""Analyze this patient health record, create both summaries and also extract the 3 items for Current Medications:
 
 {patient_data[:3000]}
 
@@ -186,12 +196,19 @@ If the record is incomplete, make reasonable inferences from available data."""
             return []
 
         system_prompt = f"""You are a clinical data analyst. Your job is to perform a longitudinal trend analysis for a patient's chronic conditions.
+You will be given a de-identified record where dates are formatted like `[DATE]/YYYY`.
+
+**CRITICAL RULE:** Your final output MUST be human-readable.
+- When you find a data point like `7.2% on [DATE]/2024`, you MUST re-format it in your `data_points` list to only include the value and the year.
+- **Correct format:** "7.2% (in 2024)"
+- **Incorrect format:** "7.2% on [DATE]/2024"
+
 You must scan the *entire* patient record to find all data points for the following metrics: {', '.join(metrics_to_track)}.
 
 For each metric, you will:
-1.  **Find Data Points:** Extract all available timestamped data (e.g., "7.8% on 10/15/2024", "7.9% on 07/12/2024").
+1.  **Find Data Points:** Extract all available data and **re-format them** as human-readable strings (e.g., "7.2% (in 2024)").
 2.  **Determine Trend:** Analyze the data points chronologically and set the 'trend' to "Improving", "Worsening", "Stable", or "Not Enough Data".
-3.  **Write Analysis:** Provide a concise, one-sentence analysis explaining the trend. (e.g., "The patient's HbA1c is improving slightly but remains above the target goal.").
+3.  **Write Analysis:** Provide a concise, one-sentence analysis, also using only the year (e.g., "The patient's HbA1c was 7.2% in 2024.").
 
 You must return a JSON list, one entry for each metric.
 """
@@ -262,6 +279,60 @@ Focus on actionable, specific health activities."""
         )
         
         return response_text.activities
+    
+    # ========== AGENT 2.5: MEDICATION AUDITOR ==========
+
+    def run_medication_analysis_agent(
+        self,
+        patient_summary: PatientSummary,
+        patient_data: str  # Pass full record for context
+    ) -> List[MedicationAnalysis]:
+        """
+        Analyzes the patient's current medication list for potential
+        interactions, condition conflicts, or outdated scripts.
+        """
+
+        if not patient_summary.current_medications:
+            print("  No current medications found to analyze.")
+            return []
+
+        system_prompt = """You are an expert AI Pharmacist-Auditor. Your job is to review a patient's medication list and flag potential issues for a *doctor's review*.
+
+**CRITICAL RULES:**
+1.  **YOU ARE AN AUDITOR, NOT A DOCTOR.** You MUST NOT give medical advice or tell the user to "stop taking" medication.
+2.  **GROUND YOUR ANALYSIS:** Your analysis MUST be based *only* on the provided `Patient Summary` and `Current Medications` list.
+3.  **CITE YOUR EVIDENCE:** For every issue you flag, you MUST fill the `supporting_evidence` field with the *exact* data you used (e.g., "Conflict found between 'Med: Aspirin 81mg' and 'Condition: Atrial Fibrillation'").
+4.  **NO HALLUCINATIONS:** You are **FORBIDDEN** from analyzing or mentioning redacted data like `[NAME]` or `[REDACTED]`. If the medication list is empty or only contains redacted text, you must return an empty list.
+
+**YOUR TASK:**
+Review the `current_medications` list and check for 3 types of issues:
+1.  **Interaction:** A significant interaction *between two* medications on the list.
+2.  **Condition Conflict:** A medication that is risky for a condition in the `advanced_summary`.
+3.  **Outdated:** A medication that is for short-term use (e.g., antibiotic) but appears to be on a permanent list.
+
+Return a JSON list of all issues you find. If you find no issues, return an empty list.
+"""
+
+        user_prompt = f"""**Patient Summary:**
+{patient_summary.advanced_summary}
+
+**Current Medications:**
+{json.dumps(patient_summary.current_medications)}
+
+**Full Patient Record (for context):**
+{patient_data}
+
+---
+Please analyze the medication list and return a list of potential issues.
+"""
+
+        response_model = self._call_llm(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_format=MedicationAnalysisList  
+        )
+
+        return response_model.analyses
     
     # ========== AGENT 3: USPSTF GUIDELINES (RAG) ==========
     
@@ -393,21 +464,21 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
         system_prompt_assessor = """You are a medical record analyst and clinical triage expert.
 
     Your task: Determine the status of a health activity AND its medical urgency.
+    You will be given text that has been de-identified and contains tokens like [NAME] or [DATE].
+
+    **CRITICAL RULE:** Your final output MUST be human-readable.
+    - Do NOT include redacted tokens like `[NAME]` or `[DATE]` in your output.
+    - For `supporting_evidence`, **paraphrase** your finding (e.g., "A normal lipid panel was recorded in Sep 2024.").
+    - For `completion_date`, provide the general date (e.g., "Sep 2024" or "2023").
 
     You must perform "fuzzy reasoning" to determine the status (Completed, Recommended, Needs user confirmation).
 
-    You must also assign an 'urgency' level based on the patient's context:
-    - 'High': Critical, overdue screenings (e.g., cancer) or unmanaged chronic conditions (e.g., high blood pressure, diabetes).
-    - 'Medium': Routine annual tasks, vaccinations, or follow-ups.
-    - 'Low': General wellness, non-urgent lifestyle advice.
+    You must also assign an 'urgency' level:
+    - 'High': Critical, overdue screenings or unmanaged chronic conditions.
+    - 'Medium': Routine annual tasks or follow-ups.
+    - 'Low': General wellness advice.
     
-    For "Completed" status:
-    - Provide supporting_evidence and completion_date.
-    
-    For "Needs user confirmation" status:
-    - Generate 1-3 simple yes/no questions.
-    
-    Be thorough. Your output must be a valid JSON."""
+    Be thorough. Your output must be a valid, human-readable JSON."""
 
         user_prompt_assessor = f"""Activity to assess:
     {activity.model_dump_json(indent=2)}
@@ -438,21 +509,27 @@ Your output must be a deduplicated list with NO semantic duplicates and all fiel
 
         # ========== STEP 2: THE "VALIDATOR" (SELF-CORRECTION) ==========
         
-        system_prompt_validator = """You are a meticulous Quality Control agent. You will review another AI's assessment of a patient record.
+        system_prompt_validator = """You are a meticulous Quality Control agent. You will review an AI's assessment of a patient record.
+The record has been de-identified and contains tokens like [NAME] or [DATE].
+
+**CRITICAL RULE:** The final output you approve or create MUST be human-readable.
+- Do NOT include redacted tokens like `[NAME]` or `[DATE]`.
+- All `supporting_evidence` must be a **paraphrase** (e.g., "A normal lipid panel was recorded in Sep 2024.").
+- All `completion_date` fields must be general (e.g., "Sep 2024" or "2023").
 
 Your job:
 1. Review the "Activity" and the "Patient Record".
-2. Critically analyze the "First-Draft Assessment".
+2. Critically analyze the "First-Draft Assessment" for accuracy AND for this human-readability rule.
 3. Check if the 'supporting_evidence' truly supports the 'status'.
 4. **Critically review the 'urgency' level.** Is 'High' appropriate for this patient's risks?
 5. Assign a 'confidence_score' (0-100) for the draft.
 6. **Final Decision:**
-   - If confidence < 70, you MUST provide a *new, corrected assessment* (including status AND urgency).
-   - If confidence >= 70, the draft is good. Return the *original draft assessment*, but add your confidence score.
+   - If confidence < 70 OR if the draft includes redacted tokens, you MUST provide a *new, corrected, human-readable assessment*.
+   - If confidence >= 70 and the draft is human-readable, return the *original draft assessment* (but add your confidence score).
 
 7. **MANDATORY RULE:** If the final 'status' is "Needs user confirmation", you MUST generate 'user_input_questions'.
 
-Your final output MUST be a single, valid JSON object."""
+Your final output MUST be a single, valid, human-readable JSON object."""
 
         user_prompt_validator = f"""**1. Original Activity to Assess:**
     {activity.model_dump_json(indent=2)}
@@ -589,12 +666,10 @@ Your job is to analyze a 'what-if' scenario for a user about their health report
 ---
 Please provide your analysis, starting with the medical reason for this activity's importance.
 """
-        
-        # Call the LLM for a simple text response
         response = self._call_llm(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            response_format=None  # We want a simple string
+            response_format=None  
         )
         
         return response

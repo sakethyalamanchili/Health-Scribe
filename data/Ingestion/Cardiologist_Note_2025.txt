@@ -1,0 +1,33 @@
+Cardiology Associates of South Florida
+
+PATIENT: Doe, Jane R.
+DOB: 05/20/1955
+DATE OF VISIT: 11/05/2025
+PROVIDER: Dr. Anand Patel, MD
+
+REASON FOR VISIT:
+Referred by Dr. Chen for persistent hypertension.
+
+FINDINGS:
+
+Patient's BP is 140/86 in office, confirming HTN.
+
+EKG performed in-office shows Atrial Fibrillation (AFib) with a rate of 88 bpm. This is a new diagnosis.
+
+Patient is at high risk for stroke given her age and new AFib.
+
+ASSESSMENT:
+
+Hypertension (uncontrolled)
+
+Atrial Fibrillation (NEW)
+
+PLAN:
+
+Will start patient on Eliquis 5mg BID (anticoagulation) to reduce stroke risk.
+
+Will ADD Amlodipine 5mg daily to her Lisinopril for better BP control.
+
+Patient reports she is already taking Aspirin 81mg daily.
+
+Follow-up in 1 month.
