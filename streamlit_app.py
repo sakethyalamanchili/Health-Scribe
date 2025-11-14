@@ -134,8 +134,7 @@ streamlit run streamlit_app.py
         )
         
         st.markdown("""
-        "This system uses a team of specialized AI agents to unify and "
-        "audit your health records, creating a single, prioritized checklist."
+        "This system uses a team of specialized AI agents to unify and audit your health records, creating a single, prioritized checklist."
         
         This system uses a team of specialized AI agents to:
         - Unify multiple, fragmented health records (.txt files)
@@ -164,14 +163,14 @@ streamlit run streamlit_app.py
     
     with tab1:
         st.header("Upload Health Records")
-        st.markdown("Upload all of your .txt health records from different doctors. CareGuide will unify them.")
+        st.markdown("Upload all of your health records from different doctors. CareGuide will unify them.")
         
         col1, col2 = st.columns([2, 1])
         
         with col1:
             # --- THIS IS THE SIMPLIFIED UPLOADER ---
             uploaded_text_files = st.file_uploader(
-                "Upload Text Files (.txt)",
+                "Upload Text Files ",
                 type=['txt'],
                 accept_multiple_files=True
             )
