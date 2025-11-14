@@ -17,6 +17,7 @@ from orchestrator import HealthAssessmentOrchestrator
 from models import HealthActivityStatus
 
 
+# --- HELPER FUNCTION FOR RISK STRATIFICATION ---
 def get_urgency_emoji(urgency: str) -> str:
     """Returns a color-coded emoji for the urgency level."""
     if urgency == "High":
@@ -28,7 +29,62 @@ def get_urgency_emoji(urgency: str) -> str:
     return "⚪"  # Default
 
 
-def main():
+def show_acknowledgment_page():
+    """
+    Displays the acknowledgment and disclaimer page.
+    This is the "front door" of the app.
+    """
+    st.markdown('<h1 class="main-header">🏥 Welcome to CareGuide</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Your Intelligent Health Auditor & Guide</p>', unsafe_allow_html=True)
+    
+    st.divider()
+
+    st.markdown("### Before You Begin: Please Acknowledge")
+    
+    # This is the "Human-in-Charge" disclaimer you wrote.
+    st.info(
+        """
+        **CareGuide is an intelligent health auditor, not a doctor.**
+        
+        This application is a smart assistant. Its purpose is to help you find
+        what's in your own files and compare it to a checklist. The goal is to
+        empower you with organized information.
+
+        - This project's output is **not a diagnosis**.
+        - The documents you upload are the "ground truth."
+        - The output generated is the AI's *analysis* of that truth.
+
+        **You must always consult a human medical professional for medical advice.**
+        """
+    )
+    
+    st.markdown("---")
+
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("I Understand and Agree", use_container_width=True):
+            st.session_state.agreed_to_terms = True
+            st.rerun()
+            
+    with col2:
+        if st.button("I Do Not Agree", use_container_width=True):
+            st.session_state.show_disagree_message = True
+
+    if "show_disagree_message" in st.session_state and st.session_state.show_disagree_message:
+        st.warning(
+            "That's perfectly fine. CareGuide is here to provide an easy-to-understand "
+            "audit of your records. If you change your mind and are interested in "
+            "making your health information easier to navigate, simply refresh the page and agree to the terms to get started."
+        )
+
+
+def run_careguide_app():
+    """
+    This function contains your ENTIRE main application (the sidebar, tabs, etc.)
+    It only runs *after* the user has agreed to the terms.
+    """
+    
     # Check Google Gemini API key before proceeding
     if not config.GOOGLE_API_KEY:
         st.error("🚨 Google Gemini API key not found! Please set GOOGLE_API_KEY in your .env file")
@@ -39,14 +95,7 @@ def main():
             st.code("""
 # Option 1: Create .env file
 echo "GOOGLE_API_KEY=your-key-here" > .env
-
-# Option 2: Set environment variable (Mac/Linux)
-export GOOGLE_API_KEY=your-key-here
-streamlit run streamlit_app.py
-
-# Option 3: Set environment variable (Windows PowerShell)
-$env:GOOGLE_API_KEY="your-key-here"
-streamlit run streamlit_app.py
+# ... (rest of the help text) ...
             """, language="bash")
         
         st.stop()
@@ -60,117 +109,48 @@ streamlit run streamlit_app.py
         # Create the orchestrator once and store it in session state
         st.session_state.orchestrator = HealthAssessmentOrchestrator(api_key=config.GOOGLE_API_KEY)
     
-    # Page configuration
-    st.set_page_config(
-        page_title="CareGuide - Health Engagement",
-        page_icon="🏥",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    
-    # Custom CSS
-    st.markdown("""
-        <style>
-        .main-header {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-        .subtitle {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 2rem;
-        }
-        .metric-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .agent-step {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 0.5rem 0;
-            border-left: 3px solid #28a745;
-        }
-        .stButton>button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
     # Header
     st.markdown('<h1 class="main-header">🏥 CareGuide</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Intelligent Health Engagement System powered by Multi-Agent AI</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Your Intelligent Health Auditor & Guide</p>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
         st.header("About CareGuide")
         
+        # --- THIS IS YOUR DISCLAIMER (MOVED FROM HERE) ---
+        # We moved the main disclaimer to the acknowledgment page.
+        # We can keep a smaller one here.
         st.warning(
             """
-            **Disclaimer: Human-in-Charge**
-            
-            This project's output is **not a diagnosis**; it is an **audit**.
-            
-            It's a smart assistant that helps you find what's in your own files and
-            compares it to a checklist. The documents you upload are the "ground truth,"
-            and this output is the AI's analysis of that truth.
-            
-            **Always consult a human medical professional for medical advice.**
+            **Disclaimer:** This is an AI-powered auditor, not a doctor.
+            Always consult a medical professional for advice.
             """
         )
-        
-        st.markdown("""
-        "This system uses a team of specialized AI agents to unify and audit your health records, creating a single, prioritized checklist."
-        
-        This system uses a team of specialized AI agents to:
-        - Unify multiple, fragmented health records (.txt files)
-        - Cross-reference against medical guidelines (RAG)
-        - **Prioritize** tasks by medical urgency (🔴 High, 🟡 Medium, 🟢 Low)
-        - **Self-correct** its own assessments with a confidence score
-        - Answer your questions about your report
-        
-        **Technology Stack:**
-        - Multi-Agent AI Architecture
-        - Google Gemini 1.5 Pro
-        - Agentic Self-Correction Loop
-        - USPSTF Clinical Guidelines (RAG)
-        - HIPAA De-identification
-        """)
+
+        st.markdown(
+            "This system uses a team of specialized AI agents to unify and "
+            "audit your health records, creating a single, prioritized checklist."
+        )
         
         st.divider()
         
         st.subheader("System Status")
         st.success(f"✅ API: Connected")
         st.info(f"🤖 Model: {config.GEMINI_MODEL}")
-        st.info(f"⚡ Agents: 6 Active + 2 Chatbots")
+        st.info(f"⚡ Agents: 6 Active + 2 Chatbots") # <-- Updated agent count
     
     # Main content
     tab1, tab2, tab3, tab4 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works", "🔮 What-If Analysis"])
     
     with tab1:
         st.header("Upload Health Records")
-        st.markdown("Upload all of your health records from different doctors. CareGuide will unify them.")
+        st.markdown("Upload all of your .txt health records from different doctors. CareGuide will unify them.")
         
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            # --- THIS IS THE SIMPLIFIED UPLOADER ---
             uploaded_text_files = st.file_uploader(
-                "Upload Text Files ",
+                "Upload Text Files (.txt)",
                 type=['txt'],
                 accept_multiple_files=True
             )
@@ -180,16 +160,15 @@ streamlit run streamlit_app.py
         
         with col2:
             st.markdown("**Supported Formats:**")
-            st.markdown("- Clinical notes (.txt)")
-            st.markdown("- Health summaries (.txt)")
-            st.markdown("- EHR exports (.txt)")
+            st.markdown("- Clinical notes")
+            st.markdown("- Health summaries")
+            st.markdown("- EHR exports")
             st.markdown("")
             st.markdown("**Data Privacy:**")
             st.markdown("✓ HIPAA de-identification")
             st.markdown("✓ No data storage")
             st.markdown("✓ Secure processing")
         
-        # --- THIS LOGIC IS NOW SIMPLIFIED ---
         if uploaded_text_files:
             st.divider()
             
@@ -199,7 +178,6 @@ streamlit run streamlit_app.py
                     st.caption(f.name)
             
             if st.button("🚀 Analyze All Records", use_container_width=True):
-                # We pass the list of text files
                 process_health_record(text_files=uploaded_text_files)
     
     with tab2:
@@ -226,53 +204,54 @@ streamlit run streamlit_app.py
         st.markdown("""
         ### Multi-Agent Architecture
         
-        Project CareGuide uses a deterministic pipeline of specialized AI agents:
+        CareGuide uses a deterministic pipeline of specialized AI agents:
         """)
         
+        # --- UPDATED AGENT LIST ---
         agents = [
-        {
-            "name": "1. Unifier & Summarizer Agent",
-            "icon": "📝",
-            "description": "Combines all text files, creates a structured summary, and extracts the patient's current medication list.",
-            "output": "PatientSummary model (age, sex, meds, etc.)"
-        },
-        {
-            "name": "2. Trend Analyst Agent",
-            "icon": "📈",
-            "description": "Scans the master record to find and analyze data points over time (e.g., HbA1c, Blood Pressure).",
-            "output": "A list of trend analyses (e.g., 'Improving', 'Worsening')"
-        },
-        {
-            "name": "3. Medication Auditor Agent", # <-- NEW AGENT
-            "icon": "💊",
-            "description": "An 'AI Pharmacist-Auditor' that checks the medication list for dangerous interactions or conflicts with the patient's conditions.",
-            "output": "A list of potential issues to discuss with a doctor."
-        },
-        {
-            "name": "4. Recommendation Agents (RAG + Web)", # <-- Renumbered
-            "icon": "🌐",
-            "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
-            "output": "Two lists of HealthActivityRecommendation"
-        },
-        {
-            "name": "5. Consolidation Agent", # <-- Renumbered
-            "icon": "🔄",
-            "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
-            "output": "A single, clean list of unique activities"
-        },
-        {
-            "name": "6. Self-Correcting Assessment Agent", # <-- Renumbered
-            "icon": "🧠",
-            "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, prioritizes it (🔴/🟡/🟢), and corrects it if needed.",
-            "output": "Final assessment with status, confidence, and urgency"
-        },
-        {
-            "name": "7. Conversational & Analyst Agents", # <-- Renumbered
-            "icon": "💬",
-            "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
-            "output": "Natural language explanations"
-        }
-    ]
+            {
+                "name": "1. Unifier & Summarizer Agent",
+                "icon": "📝",
+                "description": "Combines all text files, creates a structured summary, and extracts the patient's current medication list.",
+                "output": "PatientSummary model (age, sex, meds, etc.)"
+            },
+            {
+                "name": "2. Trend Analyst Agent",
+                "icon": "📈",
+                "description": "Scans the master record to find and analyze data points over time (e.g., HbA1c, Blood Pressure).",
+                "output": "A list of trend analyses (e.g., 'Improving', 'Worsening')"
+            },
+            {
+                "name": "3. Medication Auditor Agent",
+                "icon": "💊",
+                "description": "An 'AI Pharmacist-Auditor' that checks the medication list for dangerous interactions or conflicts with the patient's conditions.",
+                "output": "A list of potential issues to discuss with a doctor."
+            },
+            {
+                "name": "4. Recommendation Agents (RAG + Web)",
+                "icon": "🌐",
+                "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
+                "output": "Two lists of HealthActivityRecommendation"
+            },
+            {
+                "name": "5. Consolidation Agent",
+                "icon": "🔄",
+                "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
+                "output": "A single, clean list of unique activities"
+            },
+            {
+                "name": "6. Self-Correcting Assessment Agent",
+                "icon": "🧠",
+                "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, prioritizes it (🔴/🟡/🟢), and corrects it if needed.",
+                "output": "Final assessment with status, confidence, and urgency"
+            },
+            {
+                "name": "7. Conversational & Analyst Agents",
+                "icon": "💬",
+                "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
+                "output": "Natural language explanations"
+            }
+        ]
         
         for agent in agents:
             with st.container():
@@ -289,6 +268,7 @@ streamlit run streamlit_app.py
         ### Why Agents?
         
         This problem is **Agentic-Mandatory** because it requires:
+        - **Pharmaceutical Knowledge:** Auditing complex drug interactions.
         - **Clinical Prioritization:** Reasoning about medical urgency.
         - **Self-Correction:** An agent must review and validate its own "fuzzy" assessments.
         - **Semantic Understanding:** Merging "flu shot" and "influenza vaccine".
@@ -298,7 +278,7 @@ streamlit run streamlit_app.py
         """)
     
     with tab4:
-        st.header("🔮 What-If Analysis")
+        st.header("What-If Analysis")
         st.markdown("See how your Health Engagement Score changes by completing recommended tasks.")
 
         # This feature only works *after* a report is generated
@@ -427,9 +407,10 @@ streamlit run streamlit_app.py
                     f"you earned **{new_score_data['earned_points'] - current_score_data['earned_points']:.1f}** more points, "
                     f"boosting your total score."
                 )
+
     
     # ===============================================
-    # == 4. REPORT DISPLAY & CHATBOT ==
+    # == 5. REPORT DISPLAY & CHATBOT ==
     # ===============================================
     
     # This section only appears AFTER a report has been generated and stored in session_state
@@ -441,11 +422,12 @@ streamlit run streamlit_app.py
         st.divider()
         st.markdown("## 📊 Health Engagement Report")
         
+        
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.metric("Health Engagement Score", f"{result.health_engagement_score:.0f}/100", 
-                        help="Overall score based on completed preventive care activities")
+                        help="Overall score based on weighted urgency of completed tasks")
         
         with col2:
             st.metric("Completed Activities", f"{result.completed_count}/{result.total_activities}",
@@ -456,7 +438,7 @@ streamlit run streamlit_app.py
             st.metric("Completion Rate", f"{completion_rate:.0f}%",
                         help="Percentage of activities marked as completed")
         
-        # --- TREND ANALYSIS SECTION ---
+        # --- NEW: DISPLAY CHRONIC DISEASE TRENDS ---
         if result.disease_trends:
             st.markdown("### 📈 Chronic Disease Trends")
             
@@ -472,12 +454,13 @@ streamlit run streamlit_app.py
                         for dp in trend.data_points:
                             st.markdown(f"- `{dp}`")
             st.divider()
-        
-        # --- THIS IS THE NEW MEDICATION AUDIT SECTION ---
+        # -----------------------------------------------
+
+        # --- NEW: DISPLAY MEDICATION AUDIT ---
         if result.medication_analysis_list:
             st.markdown("### 💊 Medication Audit")
             st.caption("The AI auditor has flagged potential items to discuss with your doctor. **Do not stop or change any medication without medical advice.**")
-
+            
             # Sort by urgency
             meds_sorted = sorted(result.medication_analysis_list, key=lambda x: (x.urgency == 'High', x.urgency == 'Medium'), reverse=True)
 
@@ -487,6 +470,9 @@ streamlit run streamlit_app.py
                     col1, col2 = st.columns([2, 1])
                     with col1:
                         st.markdown(f"**Explanation:** {med_issue.explanation}")
+                        if med_issue.supporting_evidence:
+                            st.markdown("**Evidence:**")
+                            st.code(med_issue.supporting_evidence, language="json")
                     with col2:
                         if med_issue.urgency == "High":
                             st.error(f"**Urgency:** {med_issue.urgency}")
@@ -495,6 +481,7 @@ streamlit run streamlit_app.py
                         else:
                             st.info(f"**Urgency:** {med_issue.urgency}")
             st.divider()
+        # -----------------------------------------------
         
         # Activity breakdown
         st.markdown("### 📋 Activity Assessment Details")
@@ -515,7 +502,6 @@ streamlit run streamlit_app.py
         if completed:
             st.markdown("#### ✅ Completed Activities")
             for activity in completed:
-                # --- THIS IS THE CRITICAL UPDATE (Urgency Emoji) ---
                 emoji = get_urgency_emoji(activity.urgency)
                 with st.expander(f"✅ {emoji} {activity.recommendation_short_str}"):
                     col1, col2 = st.columns([2, 1])
@@ -528,7 +514,7 @@ streamlit run streamlit_app.py
                     
                     with col2:
                         st.success(f"**Status:** {activity.status}")
-                        st.caption(f"**Urgency:** {activity.urgency}") # <-- Show text
+                        st.caption(f"**Urgency:** {activity.urgency}") 
                         if activity.confidence_score:
                             st.caption(f"**AI Confidence:** {activity.confidence_score}%")
                         if activity.completion_date:
@@ -540,7 +526,7 @@ streamlit run streamlit_app.py
             for activity in recommended:
                 emoji = get_urgency_emoji(activity.urgency)
                 with st.expander(f"💡 {emoji} {activity.recommendation_short_str}"):
-                    st.caption(f"**Urgency:** {activity.urgency}") # <-- Show text
+                    st.caption(f"**Urgency:** {activity.urgency}") 
                     if activity.confidence_score:
                         st.caption(f"**AI Confidence:** {activity.confidence_score}%")
                     st.markdown(f"**Description:** {activity.recommendation_long_str}")
@@ -556,7 +542,7 @@ streamlit run streamlit_app.py
                 with st.expander(f"❓ {emoji} {activity.recommendation_short_str}"):
                     st.markdown(f"**Description:** {activity.recommendation_long_str}")
                     st.markdown(f"**Category:** {activity.category}")
-                    st.caption(f"**Urgency:** {activity.urgency}") # <-- Show text
+                    st.caption(f"**Urgency:** {activity.urgency}")
                     if activity.confidence_score:
                         st.caption(f"**AI Confidence:** {activity.confidence_score}%")
                     
@@ -581,7 +567,7 @@ streamlit run streamlit_app.py
         st.divider()
         st.markdown("## 💬 Ask CareGuide About Your Report")
 
-        # 1. Display ALL messages from session state
+        # Display existing chat messages
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
@@ -593,19 +579,19 @@ streamlit run streamlit_app.py
             st.session_state.messages.append({"role": "user", "content": prompt})
             
             # 4. Call the AI agent to get a response
-            with st.spinner("CareGuide is thinking..."):
-                response = st.session_state.orchestrator.agent_system.run_chat_agent(
-                    user_question=prompt,
-                    patient_summary=result.patient_summary,
-                    health_report_json=result.model_dump_json() # Give agent full context
-                )
+            with st.chat_message("assistant"):
+                with st.spinner("CareGuide is thinking..."):
+                    response = st.session_state.orchestrator.agent_system.run_chat_agent(
+                        user_question=prompt,
+                        patient_summary=result.patient_summary,
+                        health_report_json=result.model_dump_json() # Give agent full context
+                    )
+                    st.markdown(response)
             
             # 5. Add the AI's response to state
             st.session_state.messages.append({"role": "assistant", "content": response})
             
             # 6. Force a re-run from the top
-            # This will clear the input box and run the "Display ALL messages"
-            # loop (step 1) to render the new Q&A
             st.rerun()
 
 
@@ -652,8 +638,7 @@ def process_health_record(text_files):
                 st.exception(e)
                 return
         
-        # --- ADD THIS LINE TO FORCE THE PAGE TO REFRESH ---
-        st.rerun()
+        st.rerun()  # <-- ADD THIS LINE
 
 
 def process_demo(demo_content: str):
@@ -686,7 +671,67 @@ def process_demo(demo_content: str):
             st.error(f"Error during demo execution: {str(e)}")
             st.exception(e)
 
-    st.rerun()
+    st.rerun()  # <-- ADD THIS LINE
+
+
+# --- NEW "GATEKEEPER" MAIN FUNCTION ---
+def main():
+    """
+    This is the main "gatekeeper" function.
+    It checks if the user has agreed to the terms.
+    If not, it shows the acknowledgment page.
+    If yes, it runs the full CareGuide app.
+    """
+    
+    # Page config must be the first Streamlit command
+    st.set_page_config(
+        page_title="CareGuide - Health Engagement",
+        page_icon="🏥",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Custom CSS
+    st.markdown("""
+        <style>
+        .main-header {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        /* ... (rest of your CSS) ... */
+        .stButton>button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Initialize session state for agreement
+    if "agreed_to_terms" not in st.session_state:
+        st.session_state.agreed_to_terms = False
+
+    # Check the agreement
+    if st.session_state.agreed_to_terms:
+        # If they agreed, run the full app
+        run_careguide_app()
+    else:
+        # If they haven't agreed, show the acknowledgment page
+        show_acknowledgment_page()
 
 
 if __name__ == "__main__":

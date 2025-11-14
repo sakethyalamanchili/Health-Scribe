@@ -26,8 +26,8 @@ class HealthActivityRecommendation(BaseModel):
         description="Detailed activity description"
     )
     frequency_short_str: str = Field(
-        description="Frequency description (max 120 chars)",
-        max_length=120
+        description="Frequency description (max 200 chars)",
+        max_length=200  
     )
     category: Literal[
         "Preventive Screening",
