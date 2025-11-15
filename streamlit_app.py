@@ -207,48 +207,47 @@ echo "GOOGLE_API_KEY=your-key-here" > .env
         CareGuide uses a deterministic pipeline of specialized AI agents:
         """)
         
-        # --- UPDATED AGENT LIST ---
         agents = [
             {
-                "name": "1. Unifier & Summarizer Agent",
+                "name": "1. Ingestion & De-Identification (Utility Steps)",
+                "icon": "🛡️",
+                "description": "Non-AI steps. Merges all files and uses RegEx to strip 18 types of PHI (HIPAA Safe Harbor) *before* any AI calls.",
+                "output": "A single, de-identified master health record"
+            },
+            {
+                "name": "2. Core Analysis (Agents 1-3)",
                 "icon": "📝",
-                "description": "Combines all text files, creates a structured summary, and extracts the patient's current medication list.",
-                "output": "PatientSummary model (age, sex, meds, etc.)"
+                "description": "A team of 3 agents: Summarizer, Trend Analyst, and Medication Auditor build the core patient profile.",
+                "output": "Structured models for Summary, Trends, and Meds"
             },
             {
-                "name": "2. Trend Analyst Agent",
-                "icon": "📈",
-                "description": "Scans the master record to find and analyze data points over time (e.g., HbA1c, Blood Pressure).",
-                "output": "A list of trend analyses (e.g., 'Improving', 'Worsening')"
-            },
-            {
-                "name": "3. Medication Auditor Agent",
-                "icon": "💊",
-                "description": "An 'AI Pharmacist-Auditor' that checks the medication list for dangerous interactions or conflicts with the patient's conditions.",
-                "output": "A list of potential issues to discuss with a doctor."
-            },
-            {
-                "name": "4. Recommendation Agents (RAG + Web)",
+                "name": "3. Recommendation (Agents 4-5)",
                 "icon": "🌐",
-                "description": "Generates recommendations from both the LLM's broad knowledge and a specific USPSTF guidelines database (RAG).",
-                "output": "Two lists of HealthActivityRecommendation"
+                "description": "Two agents (Web + RAG) gather recommendations from LLM knowledge and the USPSTF guidelines database.",
+                "output": "Multiple lists of recommendations"
             },
             {
-                "name": "5. Consolidation Agent",
+                "name": "4. Consolidation (Agent 6)",
                 "icon": "🔄",
-                "description": "Uses semantic understanding to merge and deduplicate recommendations from all sources.",
+                "description": "A semantic agent that merges and deduplicates all recommendations into one unique, master list.",
                 "output": "A single, clean list of unique activities"
             },
             {
-                "name": "6. Self-Correcting Assessment Agent",
+                "name": "5. Assessment (Agent 7)",
                 "icon": "🧠",
-                "description": "A 2-step loop: An 'Assessor' drafts an assessment, then a 'Validator' agent reviews it, assigns a confidence score, prioritizes it (🔴/🟡/🟢), and corrects it if needed.",
+                "description": "A 2-step (Assess + Validate) loop that scans the record for evidence and assigns an urgency (🔴/🟡/🟢) to each activity.",
                 "output": "Final assessment with status, confidence, and urgency"
             },
             {
-                "name": "7. Conversational & Analyst Agents",
+                "name": "6. Scoring & Assembly (Utility Steps)",
+                "icon": "📊",
+                "description": "Non-AI steps. Calculates the final weighted score (0-100) and assembles the complete, final report.",
+                "output": "The final HealthAssessmentOutput object"
+            },
+            {
+                "name": "7. Interactive Layer (Agents 8-9)",
                 "icon": "💬",
-                "description": "A team of agents that answer user questions about the report and analyze 'What-If' scenarios.",
+                "description": "Two agents that power the UI: The 'Conversational Agent' (for chat) and the 'What-If Analyst' (for simulations).",
                 "output": "Natural language explanations"
             }
         ]
