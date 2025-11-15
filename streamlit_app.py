@@ -137,7 +137,7 @@ echo "GOOGLE_API_KEY=your-key-here" > .env
         st.subheader("System Status")
         st.success(f"✅ API: Connected")
         st.info(f"🤖 Model: {config.GEMINI_MODEL}")
-        st.info(f"⚡ Agents: 6 Active + 2 Chatbots") # <-- Updated agent count
+        st.info(f"⚡ Agents: 7 Active + 2 Chatbots") # <-- Updated agent count
     
     # Main content
     tab1, tab2, tab3, tab4 = st.tabs(["📄 Process Health Record", "📊 View Demo", "ℹ️ How It Works", "🔮 What-If Analysis"])
