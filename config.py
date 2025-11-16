@@ -4,9 +4,6 @@ Configuration settings for CareGuide
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
 
 # Project paths
 BASE_DIR = Path(__file__).parent
@@ -19,15 +16,15 @@ OUTPUT_DIR = BASE_DIR / "output"
 DATA_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
+# GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
 
-# Debug: Print API key status (without exposing the key)
-if GOOGLE_API_KEY:
-    print(f"✅ Google Gemini API key loaded: {GOOGLE_API_KEY[:7]}...{GOOGLE_API_KEY[-4:]}")
-else:
-    print("❌ Google Gemini API key NOT found in environment!")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f".env file exists: {(BASE_DIR / '.env').exists()}")
+# # Debug: Print API key status (without exposing the key)
+# if GOOGLE_API_KEY:
+#     print(f"✅ Google Gemini API key loaded: {GOOGLE_API_KEY[:7]}...{GOOGLE_API_KEY[-4:]}")
+# else:
+#     print("❌ Google Gemini API key NOT found in environment!")
+#     print(f"Current working directory: {os.getcwd()}")
+#     print(f".env file exists: {(BASE_DIR / '.env').exists()}")
 
 # In config.py
 GEMINI_MODEL = "gemini-flash-latest"

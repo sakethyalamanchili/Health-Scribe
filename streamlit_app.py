@@ -9,13 +9,12 @@ from datetime import datetime
 import os
 import utils
 
-from dotenv import load_dotenv
-load_dotenv(override=True)
-
 import config
 from orchestrator import HealthAssessmentOrchestrator
 from models import HealthActivityStatus
 
+import google.generativeai as genai
+from google.api_core.exceptions import PermissionDenied
 
 # --- HELPER FUNCTION FOR RISK STRATIFICATION ---
 def get_urgency_emoji(urgency: str) -> str:
@@ -78,6 +77,55 @@ def show_acknowledgment_page():
             "making your health information easier to navigate, simply refresh the page and agree to the terms to get started."
         )
 
+def show_api_key_page():
+    """
+    Displays the page for the user to enter their API key.
+    """
+    st.markdown('<h1 class="main-header">🔑 Enter Your API Key</h1>', unsafe_allow_html=True)
+    st.markdown(
+        "To use CareGuide, you must provide your own Google Gemini API key. "
+        "This ensures you have full control over your data and API usage."
+    )
+    st.info("Your key is stored *only* in your browser's session and is never saved by this application.")
+
+    with st.expander("How to get your Google AI API key"):
+        st.markdown(
+            """
+            1.  Go to the [Google AI Studio](https://ai.google.dev/).
+            2.  Sign in with your Google account.
+            3.  Click **"Get API key"** in a new project.
+            4.  Copy the key and paste it below.
+            """
+        )
+
+    api_key = st.text_input("Google Gemini API Key", type="password", key="api_key_input")
+
+    if st.button("Validate and Save Key", width='stretch'):
+        if not api_key:
+            st.error("Please enter a valid API key.")
+            return
+
+        try:
+            # --- THIS IS THE VALIDATION STEP ---
+            # We configure the 'genai' module with the user's key
+            genai.configure(api_key=api_key)
+
+            # We make a simple, free call to list models.
+            # If this fails, the key is bad.
+            list(genai.list_models()) 
+
+            # --- If it succeeds ---
+            st.session_state.api_key_valid = True
+            st.session_state.user_api_key = api_key
+            st.session_state.orchestrator = None # Clear any old orchestrator
+            st.success("API Key is valid! You can now proceed to the app.")
+            st.balloons()
+            st.rerun()
+
+        except PermissionDenied as e:
+            st.error(f"API Key is invalid or has been revoked. Please check your key. (Error: {e})")
+        except Exception as e:
+            st.error(f"An error occurred while validating the key: {e}")
 
 def run_careguide_app():
     """
@@ -85,29 +133,30 @@ def run_careguide_app():
     It only runs *after* the user has agreed to the terms.
     """
     
-    # Check Google Gemini API key before proceeding
-    if not config.GOOGLE_API_KEY:
-        st.error("🚨 Google Gemini API key not found! Please set GOOGLE_API_KEY in your .env file")
-        
-        st.info("📝 Create a .env file in the project root with: GOOGLE_API_KEY=your-key-here")
-        
-        with st.expander("🔧 Quick Fix Options"):
-            st.code("""
-# Option 1: Create .env file
-echo "GOOGLE_API_KEY=your-key-here" > .env
-# ... (rest of the help text) ...
-            """, language="bash")
-        
-        st.stop()
-    
     # Initialize session state for chatbot and report
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "health_report" not in st.session_state:
         st.session_state.health_report = None
-    if "orchestrator" not in st.session_state:
-        # Create the orchestrator once and store it in session state
-        st.session_state.orchestrator = HealthAssessmentOrchestrator(api_key=config.GOOGLE_API_KEY)
+
+    # --- NEW ORCHESTRATOR INITIALIZATION ---
+    # We initialize the orchestrator *only* if it doesn't exist,
+    # using the key the user provided (which is now in session state).
+    if "orchestrator" not in st.session_state or st.session_state.orchestrator is None:
+        if "user_api_key" in st.session_state:
+            try:
+                st.session_state.orchestrator = HealthAssessmentOrchestrator(
+                    api_key=st.session_state.user_api_key
+                )
+                print("Orchestrator initialized with user's API key.")
+            except Exception as e:
+                st.error(f"Failed to initialize AI agents. Please check your API key. {e}")
+                st.session_state.api_key_valid = False
+                st.rerun()
+        else:
+            # This should not happen, but as a fallback, send to API page
+            st.session_state.api_key_valid = False
+            st.rerun()
     
     # Header
     st.markdown('<h1 class="main-header">🏥 CareGuide</h1>', unsafe_allow_html=True)
@@ -673,15 +722,15 @@ def process_demo(demo_content: str):
     st.rerun()  # <-- ADD THIS LINE
 
 
-# --- NEW "GATEKEEPER" MAIN FUNCTION ---
 def main():
     """
     This is the main "gatekeeper" function.
-    It checks if the user has agreed to the terms.
-    If not, it shows the acknowledgment page.
-    If yes, it runs the full CareGuide app.
+    It guides the user through 3 steps:
+    1. Acknowledgment
+    2. API Key Entry
+    3. The Full App
     """
-    
+
     # Page config must be the first Streamlit command
     st.set_page_config(
         page_title="CareGuide - Health Engagement",
@@ -689,48 +738,37 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    
-    # Custom CSS
+
+    # Custom CSS (no changes)
     st.markdown("""
         <style>
-        .main-header {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-        .subtitle {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 2rem;
-        }
-        /* ... (rest of your CSS) ... */
-        .stButton>button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            font-weight: 600;
-        }
+        .main-header { ... }
+        .subtitle { ... }
+        .metric-card { ... }
+        .agent-step { ... }
+        .stButton>button { ... }
         </style>
     """, unsafe_allow_html=True)
-    
-    # Initialize session state for agreement
+
+    # --- NEW 3-STEP STATE MACHINE ---
+
+    # Initialize all state variables
     if "agreed_to_terms" not in st.session_state:
         st.session_state.agreed_to_terms = False
+    if "api_key_valid" not in st.session_state:
+        st.session_state.api_key_valid = False
 
-    # Check the agreement
-    if st.session_state.agreed_to_terms:
-        # If they agreed, run the full app
-        run_careguide_app()
-    else:
-        # If they haven't agreed, show the acknowledgment page
+    # Gate 1: Must agree to terms
+    if not st.session_state.agreed_to_terms:
         show_acknowledgment_page()
+
+    # Gate 2: Must provide a valid API key
+    elif not st.session_state.api_key_valid:
+        show_api_key_page()
+
+    # Gate 3: Success! Run the app.
+    else:
+        run_careguide_app()
 
 
 if __name__ == "__main__":
